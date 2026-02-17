@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en" class="transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Letshego e-KYC Enterprise Admin</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enable manual dark mode toggle
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD100', // Letshego Yellow
+                        secondary: '#000000',
+                        dark: '#2B3674',
+                        light: '#F4F7FE',
+                        grey: '#A3AED0',
+                        success: '#05CD99',
+                        danger: '#EE5D50',
+                        // Night Mode Specifics
+                        night: {
+                            bg: '#09090b',       // Deepest black/zinc
+                            card: '#18181b',     // Card bg
+                            hover: '#27272a',    // Hover state
+                            border: '#3f3f46',   // Borders
+                            text: '#e4e4e7',     // Main text
+                            muted: '#a1a1aa'     // Muted text
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .dark .glass-effect {
+            background: rgba(24, 24, 27, 0.90);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* File Chips */
+        .file-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: transform 0.2s;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            white-space: nowrap;
+        }
+        /* Dark Mode File Chips */
+        .dark .file-chip {
+            background: #27272a;
+            border-color: #3f3f46;
+            color: #e4e4e7;
+        }
+
+        .file-chip:hover { transform: translateY(-1px); border-color: #FFD100; }
+        .file-chip i { color: #FFD100; } 
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #FFD100;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #FFD100;
+        }
+        
+        /* Input Autofill Fix for Dark Mode */
+        .dark input:-webkit-autofill,
+        .dark input:-webkit-autofill:hover, 
+        .dark input:-webkit-autofill:focus, 
+        .dark input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px #27272a inset !important;
+            -webkit-text-fill-color: white !important;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .chart-container { height: 250px; }
+            .nav-btn span { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body class="bg-light dark:bg-night-bg text-dark dark:text-night-text overflow-hidden h-screen flex flex-col transition-colors duration-300">
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-900 bg-opacity-95 transition-opacity duration-500">
+        <div class="bg-white dark:bg-night-card rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100 border dark:border-night-border mx-4">
+            <div class="text-center mb-8">
+                <div class="flex justify-center mb-6">
+                    <img src="letsgo.png" alt="Letshego" class="h-16 w-auto object-contain">
+                </div>
+                <h1 class="text-2xl font-bold text-dark dark:text-white">Letshego Admin</h1>
+                <p class="text-grey text-sm">Enterprise e-KYC Portal</p>
+            </div>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-400"><i class="fas fa-user"></i></span>
+                        <input type="text" id="username" class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 dark:bg-zinc-800 dark:text-white rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="Enter admin ID" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-400"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="password" class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 dark:bg-zinc-800 dark:text-white rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-yellow-400 text-black font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg">
+                    Access Portal
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP LAYOUT (Hidden until login) -->
+    <div id="app-layout" class="flex h-screen opacity-0 pointer-events-none transition-opacity duration-500 relative">
+        
+        <!-- MOBILE SIDEBAR OVERLAY -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden glass-effect transition-opacity"></div>
+
+        <!-- SIDEBAR (Responsive) -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-night-card shadow-xl flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative border-r dark:border-night-border">
+            <div class="p-6 flex items-center justify-between border-b border-gray-100 dark:border-night-border">
+                <div class="flex items-center gap-3 justify-center w-full">
+                    <img src="letsgo.png" alt="Letshego" class="h-10 w-auto object-contain">
+                </div>
+                <!-- Close button mobile only -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-500 dark:text-gray-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
+                <button onclick="navTo('dashboard'); toggleSidebarIfMobile()" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-light dark:hover:bg-night-hover hover:text-primary transition-all group active-nav" id="nav-dashboard">
+                    <i class="fas fa-home text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Dashboard</span>
+                </button>
+                <button onclick="navTo('users'); toggleSidebarIfMobile()" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-light dark:hover:bg-night-hover hover:text-primary transition-all group" id="nav-users">
+                    <i class="fas fa-users text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">User Management</span>
+                </button>
+                <button onclick="navTo('analytics'); toggleSidebarIfMobile()" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-light dark:hover:bg-night-hover hover:text-primary transition-all group" id="nav-analytics">
+                    <i class="fas fa-chart-pie text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Analytics & Reports</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-gray-100 dark:border-night-border space-y-3">
+                <!-- Dark Mode Toggle -->
+                <div class="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-night-hover rounded-xl">
+                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300"><i class="fas fa-moon mr-2"></i>Night Mode</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="theme-toggle" class="sr-only peer" onchange="toggleTheme()">
+                        <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+
+                <button onclick="logout()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-danger hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="font-medium">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col relative overflow-hidden bg-light dark:bg-night-bg transition-colors duration-300 w-full">
+            <!-- HEADER -->
+            <header class="h-20 bg-light/50 dark:bg-night-bg/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-20">
+                <div class="flex items-center gap-4">
+                    <!-- Mobile Menu Button -->
+                    <button onclick="toggleSidebar()" class="md:hidden text-dark dark:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-night-hover">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h2 id="page-title" class="text-lg md:text-2xl font-bold text-dark dark:text-white truncate max-w-[200px] md:max-w-none">Dashboard</h2>
+                        <p class="text-xs md:text-sm text-grey dark:text-gray-400 hidden md:block">Manage your KYC process efficiently</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3 bg-white dark:bg-night-card px-2 md:px-4 py-2 rounded-full shadow-sm border border-transparent dark:border-night-border">
+                        <img src="https://ui-avatars.com/api/?name=Admin+User&background=FFD100&color=000" class="h-8 w-8 rounded-full" alt="Admin">
+                        <div class="text-sm hidden md:block">
+                            <p class="font-bold text-dark dark:text-white leading-none">Admin User</p>
+                            <span class="text-xs text-success">● Online</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- SCROLLABLE CONTENT AREA -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" id="main-scroll-area">
+                
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="view-dashboard" class="space-y-6">
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                        <!-- Stat Card 1 -->
+                        <div class="bg-white dark:bg-night-card p-5 md:p-6 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-shadow dark:border dark:border-night-border">
+                            <div>
+                                <p class="text-grey text-xs md:text-sm font-medium mb-1">Total Customers</p>
+                                <h3 class="text-2xl md:text-3xl font-bold text-dark dark:text-white" id="stat-total">0</h3>
+                            </div>
+                            <div class="h-10 w-10 md:h-12 md:w-12 rounded-full bg-light dark:bg-gray-800 flex items-center justify-center text-primary text-lg md:text-xl">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <!-- Stat Card 2 -->
+                        <div class="bg-white dark:bg-night-card p-5 md:p-6 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-shadow dark:border dark:border-night-border">
+                            <div>
+                                <p class="text-grey text-xs md:text-sm font-medium mb-1">Pending Files</p>
+                                <h3 class="text-2xl md:text-3xl font-bold text-dark dark:text-white" id="stat-pending">0</h3>
+                            </div>
+                            <div class="h-10 w-10 md:h-12 md:w-12 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500 text-lg md:text-xl">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <!-- Stat Card 3 -->
+                        <div class="bg-white dark:bg-night-card p-5 md:p-6 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-shadow dark:border dark:border-night-border">
+                            <div>
+                                <p class="text-grey text-xs md:text-sm font-medium mb-1">Completed KYC</p>
+                                <h3 class="text-2xl md:text-3xl font-bold text-dark dark:text-white" id="stat-completed">0</h3>
+                            </div>
+                            <div class="h-10 w-10 md:h-12 md:w-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-success text-lg md:text-xl">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <!-- Stat Card 4 -->
+                        <div class="bg-white dark:bg-night-card p-5 md:p-6 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-shadow dark:border dark:border-night-border">
+                            <div>
+                                <p class="text-grey text-xs md:text-sm font-medium mb-1">PEP Detected</p>
+                                <h3 class="text-2xl md:text-3xl font-bold text-dark dark:text-white" id="stat-pip">0</h3>
+                            </div>
+                            <div class="h-10 w-10 md:h-12 md:w-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-danger text-lg md:text-xl">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions & Mini Chart -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm dark:border dark:border-night-border">
+                            <h3 class="font-bold text-lg mb-4 text-dark dark:text-white">Onboarding Trends (Last 7 Days)</h3>
+                            <div class="chart-container">
+                                <canvas id="chart-mini-line"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-primary/10 dark:bg-night-card p-6 rounded-2xl shadow-sm border border-primary/20 dark:border-primary/20 flex flex-col justify-center items-center text-center">
+                            <div class="bg-primary h-14 w-14 md:h-16 md:w-16 rounded-full flex items-center justify-center text-xl md:text-2xl mb-4 shadow-lg text-black">
+                                <i class="fas fa-file-upload"></i>
+                            </div>
+                            <h3 class="font-bold text-lg md:text-xl mb-2 text-dark dark:text-white">Bulk Onboarding</h3>
+                            <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-6">Import new customer lists via CSV.</p>
+                            <button onclick="openModal('bulkModal')" class="bg-black dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors w-full text-sm font-medium">
+                                Upload CSV
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. USER MANAGEMENT VIEW -->
+                <section id="view-users" class="hidden space-y-6">
+                    <!-- Controls Toolbar -->
+                    <div class="bg-white dark:bg-night-card p-4 rounded-2xl shadow-sm flex flex-col xl:flex-row gap-4 justify-between items-stretch xl:items-center dark:border dark:border-night-border">
+                        <div class="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
+                            <!-- Custom Status Filter -->
+                            <div class="relative w-full md:w-auto">
+                                <select id="filter-status" onchange="renderTable()" class="w-full md:w-auto appearance-none bg-light dark:bg-night-hover dark:text-white border border-transparent hover:border-gray-200 dark:border-night-border pl-4 pr-10 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm font-medium cursor-pointer transition-colors">
+                                    <option value="all">All Statuses</option>
+                                    <option value="pending">Pending (0 Files)</option>
+                                    <option value="incomplete">Incomplete (1-2 Files)</option>
+                                    <option value="completed">Completed (3 Files)</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+
+                            <!-- Search -->
+                            <div class="relative w-full md:w-64">
+                                <span class="absolute left-3 top-2.5 text-gray-400 text-sm"><i class="fas fa-search"></i></span>
+                                <input type="text" id="table-search" onkeyup="renderTable()" placeholder="Search Name or ID..." class="w-full bg-light dark:bg-night-hover dark:text-white pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
+                            <button onclick="openModal('bulkModal')" class="flex-1 md:flex-none bg-primary text-black px-4 py-2 rounded-xl text-sm font-medium hover:bg-yellow-400 transition-colors shadow-sm justify-center flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Import Users
+                            </button>
+                            <button onclick="exportToCSV()" class="flex-1 md:flex-none bg-white dark:bg-night-hover dark:text-white dark:border-night-border border border-gray-200 text-dark px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm justify-center flex items-center">
+                                <i class="fas fa-file-download mr-2"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Table -->
+                    <div class="bg-white dark:bg-night-card rounded-2xl shadow-sm overflow-hidden dark:border dark:border-night-border">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead class="bg-gray-50 dark:bg-night-hover border-b border-gray-100 dark:border-night-border">
+                                    <tr>
+                                        <th class="p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer Name</th>
+                                        <th class="p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Omang ID</th>
+                                        <th class="p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Documents</th>
+                                        <th class="p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th class="p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">PIP Status</th>
+                                        <th class="p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="divide-y divide-gray-50 dark:divide-night-border">
+                                    <!-- Rows rendered via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="table-empty-state" class="hidden p-12 text-center">
+                            <div class="text-gray-300 dark:text-gray-600 text-6xl mb-4"><i class="fas fa-folder-open"></i></div>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">No users found</h3>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Try adjusting your filters or search terms.</p>
+                        </div>
+                        <div class="p-4 border-t border-gray-100 dark:border-night-border flex justify-between items-center text-sm text-grey dark:text-gray-400">
+                            <span id="showing-text">Showing 0 users</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. ANALYTICS VIEW -->
+                <section id="view-analytics" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Chart 1: Status Distribution -->
+                        <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm dark:border dark:border-night-border">
+                            <h3 class="font-bold text-lg mb-2 text-dark dark:text-white">Onboarding Status Distribution</h3>
+                            <p class="text-xs text-grey dark:text-gray-400 mb-6">Breakdown of user progress in the KYC pipeline.</p>
+                            <div class="chart-container flex justify-center">
+                                <canvas id="chart-status-pie"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Interactive PIP Status -->
+                        <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm relative dark:border dark:border-night-border">
+                            <h3 class="font-bold text-lg mb-2 text-dark dark:text-white">PIP Risk Analysis</h3>
+                            <p class="text-xs text-grey dark:text-gray-400 mb-6">Breakdown of PEP (Politically Exposed Persons) vs Non-PEP.</p>
+                            <div class="chart-container">
+                                <canvas id="chart-pip-donut"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart 3: Daily Onboarding Activity (User Count) -->
+                    <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm relative mt-6 dark:border dark:border-night-border">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                            <div>
+                                <h3 class="font-bold text-lg text-dark dark:text-white">Daily Onboarding Activity</h3>
+                                <p class="text-xs text-grey dark:text-gray-400">Number of unique customers onboarded per day.</p>
+                            </div>
+                            <span class="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded">Click bar to view users</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-daily-bar"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 4: Daily File Submission Activity (NEW) -->
+                    <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm relative mt-6 dark:border dark:border-night-border">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                            <div>
+                                <h3 class="font-bold text-lg text-dark dark:text-white">Daily File Submission Activity</h3>
+                                <p class="text-xs text-grey dark:text-gray-400">Number of unique customers who uploaded files per day.</p>
+                            </div>
+                            <span class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">Click bar to view users</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-submission-bar"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- OVERLAY FOR PIP CLICK (UPDATED: Shows List with Latest Activity) -->
+                    <div class="fixed inset-0 bg-white/95 dark:bg-night-bg/95 backdrop-blur-md hidden flex-col items-center justify-center z-50 transition-colors duration-300 p-4" id="pip-chart-overlay">
+                        <div class="bg-white dark:bg-night-card p-6 rounded-xl shadow-2xl border border-gray-200 dark:border-night-border w-full max-w-3xl h-[80vh] flex flex-col">
+                            <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
+                                <div>
+                                    <h4 class="font-bold text-lg mb-1 text-dark dark:text-white" id="pip-overlay-title">PIP Status Details</h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" id="pip-overlay-count">0 Users</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="downloadPipList()" class="px-3 py-2 rounded-lg bg-primary text-black hover:bg-yellow-400 text-sm font-medium shadow-sm transition-colors" title="Download CSV">
+                                        <i class="fas fa-file-download sm:mr-1"></i> <span class="hidden sm:inline">CSV</span>
+                                    </button>
+                                    <button onclick="closePipOverlay()" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-night-hover text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm transition-colors">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- List Container -->
+                            <div class="flex-1 overflow-y-auto overflow-x-auto" id="pip-list-container">
+                                <!-- Table Rendered Here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OVERLAY FOR DAILY ONBOARDING CHART CLICK -->
+                    <div class="fixed inset-0 bg-white/95 dark:bg-night-bg/95 backdrop-blur-md hidden flex-col items-center justify-center z-50 transition-colors duration-300 p-4" id="daily-chart-overlay">
+                        <div class="bg-white dark:bg-night-card p-6 rounded-xl shadow-2xl border border-gray-200 dark:border-night-border w-full max-w-3xl h-[80vh] flex flex-col">
+                            <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
+                                <div>
+                                    <h4 class="font-bold text-lg mb-1 text-dark dark:text-white" id="daily-overlay-title">Activity Details</h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" id="daily-overlay-count">0 Users</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="downloadDailyList()" class="px-3 py-2 rounded-lg bg-primary text-black hover:bg-yellow-400 text-sm font-medium shadow-sm transition-colors">
+                                        <i class="fas fa-file-download sm:mr-1"></i> <span class="hidden sm:inline">CSV</span>
+                                    </button>
+                                    <button onclick="closeDailyOverlay()" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-night-hover text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm transition-colors">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex-1 overflow-y-auto overflow-x-auto" id="daily-list-container"></div>
+                        </div>
+                    </div>
+
+                    <!-- OVERLAY FOR SUBMISSION CHART CLICK -->
+                    <div class="fixed inset-0 bg-white/95 dark:bg-night-bg/95 backdrop-blur-md hidden flex-col items-center justify-center z-50 transition-colors duration-300 p-4" id="submission-chart-overlay">
+                        <div class="bg-white dark:bg-night-card p-6 rounded-xl shadow-2xl border border-gray-200 dark:border-night-border w-full max-w-3xl h-[80vh] flex flex-col">
+                            <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
+                                <div>
+                                    <h4 class="font-bold text-lg mb-1 text-dark dark:text-white" id="submission-overlay-title">Submission Details</h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" id="submission-overlay-count">0 Users</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="downloadSubmissionList()" class="px-3 py-2 rounded-lg bg-primary text-black hover:bg-yellow-400 text-sm font-medium shadow-sm transition-colors">
+                                        <i class="fas fa-file-download sm:mr-1"></i> <span class="hidden sm:inline">CSV</span>
+                                    </button>
+                                    <button onclick="closeSubmissionOverlay()" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-night-hover text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm transition-colors">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex-1 overflow-y-auto overflow-x-auto" id="submission-list-container"></div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- BULK UPLOAD MODAL -->
+    <div id="bulkModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-night-card rounded-2xl shadow-2xl p-6 w-full max-w-lg border dark:border-night-border">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-xl text-dark dark:text-white">Import Customers</h3>
+                <button onclick="closeModal('bulkModal')" class="text-gray-400 hover:text-black dark:hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-primary p-4 mb-6 rounded-r-lg">
+                <h4 class="font-bold text-sm text-yellow-800 dark:text-yellow-200 mb-1">CSV Requirements</h4>
+                <p class="text-xs text-yellow-700 dark:text-yellow-300">Headers: <code class="bg-white dark:bg-black px-1 rounded border border-yellow-200 dark:border-yellow-800">omang</code>, <code class="bg-white dark:bg-black px-1 rounded border border-yellow-200 dark:border-yellow-800">full_name</code>.</p>
+                <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">PIP status defaults to 'Not Set'.</p>
+            </div>
+            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-primary dark:hover:border-primary transition-colors cursor-pointer relative" id="drop-zone">
+                <input type="file" id="csv-file" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <i class="fas fa-cloud-upload-alt text-4xl text-gray-300 dark:text-gray-500 mb-3"></i>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Click to upload or drag and drop</p>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('bulkModal')" class="px-5 py-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-night-hover transition-colors">Cancel</button>
+                <button onclick="processCSV()" class="px-5 py-2 rounded-xl bg-primary text-black font-medium hover:bg-yellow-400 shadow-md transition-all">Import Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT USER MODAL -->
+    <div id="editModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-night-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border dark:border-night-border flex flex-col">
+            <div class="p-6 border-b border-gray-100 dark:border-night-border flex justify-between items-center sticky top-0 bg-white dark:bg-night-card z-10">
+                <h3 class="font-bold text-xl text-dark dark:text-white"><i class="fas fa-user-edit mr-2 text-primary"></i>Customer Profile</h3>
+                <button onclick="closeModal('editModal')" class="text-gray-400 hover:text-black dark:hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="p-8 space-y-6 flex-1 overflow-y-auto">
+                <input type="hidden" id="edit-id">
+                
+                <!-- Info Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+                        <input type="text" id="edit-name" class="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 dark:bg-zinc-800 dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIP / Risk Status</label>
+                        <select id="edit-pip-status-select" class="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 dark:bg-zinc-800 dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:outline-none transition-colors">
+                            <option value="Not Set">Not Set</option>
+                            <option value="Non-PEP">Non-PEP</option>
+                            <option value="PEP">PEP (Politically Exposed)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Source of Wealth (Read Only, hidden if empty) -->
+                <div id="wealth-field-container" class="hidden bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-700">
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-coins mr-1 text-primary"></i> Source of Wealth 
+                        <span class="text-xs font-normal opacity-70 ml-2">(Read Only)</span>
+                    </label>
+                    <input type="text" id="edit-source-wealth" readonly class="w-full px-4 py-2 border border-gray-200 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 rounded-xl text-gray-600 dark:text-gray-400 focus:outline-none cursor-not-allowed">
+                </div>
+
+                <!-- Files (All 5 Types) -->
+                <div>
+                    <h4 class="font-bold text-md mb-4 border-b border-gray-100 dark:border-night-border pb-2 text-dark dark:text-white">Documents (Need 3 total, Omang is mandatory)</h4>
+                    <div class="space-y-4">
+                        <!-- Omang -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
+                            <div class="flex items-center gap-4 w-full sm:w-auto">
+                                <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-id-card text-teal-600"></i></div>
+                                <div class="flex-1 sm:flex-none">
+                                    <p class="text-sm font-medium text-dark dark:text-white">Omang ID (Mandatory)</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" id="status-omang">No file</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 w-full sm:w-auto sm:ml-auto">
+                                <input type="file" id="file-omang" class="hidden" onchange="uploadFile('omang_file_url', 'file-omang', 'status-omang')">
+                                <button onclick="document.getElementById('file-omang').click()" class="text-xs bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-600 text-dark dark:text-gray-300 px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 w-full sm:w-auto">Upload</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Payslip -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
+                            <div class="flex items-center gap-4 w-full sm:w-auto">
+                                <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-money-bill-wave text-blue-600"></i></div>
+                                <div class="flex-1 sm:flex-none">
+                                    <p class="text-sm font-medium text-dark dark:text-white">Payslip</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" id="status-payslip">No file</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 w-full sm:w-auto sm:ml-auto">
+                                <input type="file" id="file-payslip" class="hidden" onchange="uploadFile('payslip_url', 'file-payslip', 'status-payslip')">
+                                <button onclick="document.getElementById('file-payslip').click()" class="text-xs bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-600 text-dark dark:text-gray-300 px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 w-full sm:w-auto">Upload</button>
+                            </div>
+                        </div>
+
+                        <!-- Utility Bill -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
+                            <div class="flex items-center gap-4 w-full sm:w-auto">
+                                <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-bolt text-purple-600"></i></div>
+                                <div class="flex-1 sm:flex-none">
+                                    <p class="text-sm font-medium text-dark dark:text-white">Utility Bill</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" id="status-utility">No file</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 w-full sm:w-auto sm:ml-auto">
+                                <input type="file" id="file-utility" class="hidden" onchange="uploadFile('utility_bill_url', 'file-utility', 'status-utility')">
+                                <button onclick="document.getElementById('file-utility').click()" class="text-xs bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-600 text-dark dark:text-gray-300 px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 w-full sm:w-auto">Upload</button>
+                            </div>
+                        </div>
+
+                        <!-- Confirmation Letter -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
+                            <div class="flex items-center gap-4 w-full sm:w-auto">
+                                <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-envelope-open-text text-orange-600"></i></div>
+                                <div class="flex-1 sm:flex-none">
+                                    <p class="text-sm font-medium text-dark dark:text-white">Confirmation Letter</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" id="status-confirm">No file</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 w-full sm:w-auto sm:ml-auto">
+                                <input type="file" id="file-confirm" class="hidden" onchange="uploadFile('confirmation_letter_url', 'file-confirm', 'status-confirm')">
+                                <button onclick="document.getElementById('file-confirm').click()" class="text-xs bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-600 text-dark dark:text-gray-300 px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 w-full sm:w-auto">Upload</button>
+                            </div>
+                        </div>
+
+                        <!-- Affidavit -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
+                            <div class="flex items-center gap-4 w-full sm:w-auto">
+                                <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-gavel text-gray-600"></i></div>
+                                <div class="flex-1 sm:flex-none">
+                                    <p class="text-sm font-medium text-dark dark:text-white">Affidavit</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" id="status-affidavit">No file</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 w-full sm:w-auto sm:ml-auto">
+                                <input type="file" id="file-affidavit" class="hidden" onchange="uploadFile('affidavit_url', 'file-affidavit', 'status-affidavit')">
+                                <button onclick="document.getElementById('file-affidavit').click()" class="text-xs bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-600 text-dark dark:text-gray-300 px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 w-full sm:w-auto">Upload</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-gray-100 dark:border-night-border flex justify-end gap-3 bg-gray-50 dark:bg-night-card rounded-b-2xl sticky bottom-0 z-10">
+                <button onclick="closeModal('editModal')" class="px-5 py-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                <button onclick="saveUserChanges()" class="px-5 py-2 rounded-xl bg-primary text-black font-medium hover:bg-yellow-400 shadow-md transition-all">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script type="module">
+        // 1. CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDsspAg2X5kpfcEdDgFxalKpHyVLjwrK80",
+            authDomain: "letshego-chatbot-demo.firebaseapp.com",
+            projectId: "letshego-chatbot-demo",
+            storageBucket: "letshego-chatbot-demo.firebasestorage.app",
+            messagingSenderId: "657696543857",
+            appId: "1:657696543857:web:038afffde70f2f401777d0"
+        };
+        
+        const ADMIN_AUTH = {
+            username: "admin",
+            password: "Letshego2026!"
+        };
+
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+        // Initialize App
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Global State
+        let allCustomers = [];
+        let filteredCustomers = [];
+        let charts = {};
+        let selectedPipStatusForDownload = null;
+        let selectedDateForDownload = null;
+        let selectedSubmissionDateForDownload = null;
+
+        // --- SIDEBAR TOGGLE LOGIC ---
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        };
+
+        window.toggleSidebarIfMobile = () => {
+            if (window.innerWidth < 768) {
+                window.toggleSidebar();
+            }
+        };
+
+        // --- THEME HANDLING ---
+        window.toggleTheme = () => {
+            const html = document.documentElement;
+            const checkbox = document.getElementById('theme-toggle');
+            
+            if (checkbox.checked) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            updateCharts(); 
+        };
+
+        // Init Theme
+        const savedTheme = localStorage.getItem('theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-toggle').checked = true;
+        }
+
+        // 2. AUTHENTICATION & INIT
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+
+            if (u === ADMIN_AUTH.username && p === ADMIN_AUTH.password) {
+                const btn = e.target.querySelector('button');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                setTimeout(() => {
+                    document.getElementById('login-overlay').style.opacity = '0';
+                    document.getElementById('app-layout').classList.remove('opacity-0', 'pointer-events-none');
+                    document.getElementById('app-layout').classList.add('opacity-100');
+                    setTimeout(() => document.getElementById('login-overlay').remove(), 500);
+                    initDataListener();
+                }, 800);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Access Denied',
+                    text: 'Invalid credentials provided.',
+                    confirmButtonColor: '#EE5D50'
+                });
+            }
+        });
+
+        // 3. KYC LOGIC
+        function calculateFileCount(data) {
+            let score = 0;
+            const hasOmang = data.omang_file_url && data.omang_file_url.length > 5;
+            if (hasOmang) score++;
+
+            const otherDocs = [
+                data.payslip_url, 
+                data.utility_bill_url, 
+                data.confirmation_letter_url, 
+                data.affidavit_url
+            ];
+            const othersCount = otherDocs.filter(f => f && f.length > 5).length;
+            
+            let total = score + othersCount;
+            if (total > 3) total = 3; 
+
+            return {
+                total: total,
+                isComplete: hasOmang && othersCount >= 2
+            };
+        }
+
+        // 4. DATA LISTENER (REALTIME)
+        function initDataListener() {
+            const unsub = onSnapshot(collection(db, "customers"), (snapshot) => {
+                allCustomers = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const kyc = calculateFileCount(data);
+                    
+                    let displayPipStatus = data.pip_status || 'Not Set';
+                    if (!displayPipStatus) displayPipStatus = 'Not Set';
+
+                    // Determine last activity time accurately
+                    const lastActivity = data.last_activity || data.last_upload_date || data.created_at || '1970-01-01T00:00:00.000Z';
+
+                    allCustomers.push({
+                        id: doc.id,
+                        omang: doc.id.replace('ID', ''),
+                        ...data,
+                        display_pip_status: displayPipStatus, 
+                        fileCount: kyc.total,
+                        isComplete: kyc.isComplete,
+                        sortTime: new Date(lastActivity).getTime(),
+                        // Helper for latest date logic
+                        latestDate: lastActivity
+                    });
+                });
+                
+                // SORT BY MOST RECENT ACTIVITY (Newest First)
+                allCustomers.sort((a, b) => b.sortTime - a.sortTime);
+
+                updateStats();
+                renderTable(); 
+                updateCharts();
+            });
+        }
+
+        // 5. NAVIGATION LOGIC
+        window.navTo = (page) => {
+            document.querySelectorAll('main section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${page}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-nav', 'bg-light', 'text-primary'));
+            
+            // Reset active state styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-light', 'text-primary');
+                btn.classList.remove('dark:bg-night-hover', 'dark:text-white'); 
+            });
+            
+            const btn = document.getElementById(`nav-${page}`);
+            btn.classList.add('active-nav', 'bg-light', 'text-primary'); 
+            
+            const titles = { 'dashboard': 'Dashboard Overview', 'users': 'User Management', 'analytics': 'Analytics & Reports' };
+            document.getElementById('page-title').innerText = titles[page];
+        };
+
+        // 6. RENDER TABLE
+        window.renderTable = () => {
+            const filterStatus = document.getElementById('filter-status').value;
+            const searchTerm = document.getElementById('table-search').value.toLowerCase();
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+
+            filteredCustomers = allCustomers.filter(c => {
+                let matchesStatus = true;
+                if (filterStatus === 'pending') matchesStatus = c.fileCount === 0;
+                else if (filterStatus === 'incomplete') matchesStatus = c.fileCount > 0 && !c.isComplete;
+                else if (filterStatus === 'completed') matchesStatus = c.isComplete;
+
+                const matchesSearch = (c.full_name || '').toLowerCase().includes(searchTerm) || (c.omang || '').includes(searchTerm);
+                return matchesStatus && matchesSearch;
+            });
+
+            document.getElementById('showing-text').innerText = `Showing ${filteredCustomers.length} users`;
+            
+            if (filteredCustomers.length === 0) {
+                document.getElementById('table-empty-state').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('table-empty-state').classList.add('hidden');
+            }
+
+            filteredCustomers.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 dark:hover:bg-night-hover transition-colors group border-b border-gray-50 dark:border-night-border";
+                
+                let statusBadge = '';
+                if (c.fileCount === 0) {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-xs font-semibold">Pending</span>`;
+                } else if (!c.isComplete) {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300 text-xs font-semibold">Incomplete</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-300 text-xs font-semibold">Completed</span>`;
+                }
+
+                let vaultHTML = '<div class="flex flex-wrap">';
+                if (c.omang_file_url) vaultHTML += `<a href="${c.omang_file_url}" target="_blank" class="file-chip"><i class="fas fa-id-card"></i> Omang</a>`;
+                if (c.payslip_url) vaultHTML += `<a href="${c.payslip_url}" target="_blank" class="file-chip"><i class="fas fa-money-bill"></i> Slip</a>`;
+                if (c.utility_bill_url) vaultHTML += `<a href="${c.utility_bill_url}" target="_blank" class="file-chip"><i class="fas fa-bolt"></i> Bill</a>`;
+                if (c.confirmation_letter_url) vaultHTML += `<a href="${c.confirmation_letter_url}" target="_blank" class="file-chip"><i class="fas fa-envelope"></i> Letter</a>`;
+                if (c.affidavit_url) vaultHTML += `<a href="${c.affidavit_url}" target="_blank" class="file-chip"><i class="fas fa-gavel"></i> Oath</a>`;
+                vaultHTML += '</div>';
+
+                // --- PIP / RISK DISPLAY ---
+                let pipBadge = '';
+                const pStatus = c.display_pip_status; 
+
+                if (pStatus === 'Not Set') {
+                    pipBadge = `<span class="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-2 py-1 rounded text-[10px] font-semibold">Not Set</span>`;
+                } else if (pStatus === 'Non-PEP') {
+                    pipBadge = `<span class="bg-green-100 dark:bg-green-900/40 text-success border border-green-200 dark:border-green-800 px-2 py-1 rounded text-[10px] font-bold"><i class="fas fa-shield-alt mr-1"></i>Non-PEP</span>`;
+                } else if (pStatus === 'PEP') {
+                    pipBadge = `<span class="bg-red-50 dark:bg-red-900/40 text-danger border border-red-100 dark:border-red-800 px-2 py-1 rounded text-[10px] font-bold"><i class="fas fa-exclamation-circle mr-1"></i>PEP</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="h-8 w-8 min-w-[2rem] rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs border border-primary/30">
+                                ${getInitials(c.full_name)}
+                            </div>
+                            <span class="font-medium text-sm text-dark dark:text-white truncate max-w-[150px]">${c.full_name || 'Unknown'}</span>
+                        </div>
+                    </td>
+                    <td class="p-4 text-sm text-gray-500 dark:text-gray-400 font-mono">${c.omang}</td>
+                    <td class="p-4 min-w-[150px]">${vaultHTML}</td>
+                    <td class="p-4">${statusBadge}</td>
+                    <td class="p-4">${pipBadge}</td>
+                    <td class="p-4 text-right">
+                        <div class="flex justify-end">
+                            <button onclick="window.editUser('${c.id}')" class="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors p-2 mr-1" title="Edit/Upload">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button onclick="window.deleteUser('${c.id}')" class="text-gray-400 hover:text-danger transition-colors p-2" title="Delete User">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        // 7. EDIT & EXECUTE CARD LOGIC
+        window.editUser = (id) => {
+            const user = allCustomers.find(u => u.id === id);
+            if (!user) return;
+            
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = user.full_name || '';
+            
+            // Populate Direct PIP Status
+            document.getElementById('edit-pip-status-select').value = user.pip_status || 'Not Set';
+            
+            // Source of Wealth Logic (Hidden unless populated, Read Only for Admin)
+            const wealthContainer = document.getElementById('wealth-field-container');
+            const wealthInput = document.getElementById('edit-source-wealth');
+            
+            if (user.source_of_wealth && user.source_of_wealth.trim().length > 0) {
+                wealthContainer.classList.remove('hidden');
+                wealthInput.value = user.source_of_wealth;
+            } else {
+                wealthContainer.classList.add('hidden');
+                wealthInput.value = '';
+            }
+
+            setFileStatus('status-omang', user.omang_file_url);
+            setFileStatus('status-payslip', user.payslip_url);
+            setFileStatus('status-utility', user.utility_bill_url);
+            setFileStatus('status-confirm', user.confirmation_letter_url);
+            setFileStatus('status-affidavit', user.affidavit_url);
+
+            document.getElementById('editModal').classList.remove('hidden');
+        };
+
+        function setFileStatus(elementId, url) {
+            const el = document.getElementById(elementId);
+            if (url && url.length > 5) {
+                el.innerHTML = '<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> File Uploaded</span>';
+            } else {
+                el.innerHTML = '<span class="text-gray-400">No file</span>';
+            }
+        }
+
+        window.uploadFile = async (field, inputId, statusId) => {
+            const id = document.getElementById('edit-id').value;
+            const file = document.getElementById(inputId).files[0];
+            if (!file) return;
+
+            const statusEl = document.getElementById(statusId);
+            statusEl.innerHTML = '<span class="text-primary"><i class="fas fa-spinner fa-spin"></i> Uploading...</span>';
+
+            try {
+                const fileRef = ref(storage, `admin_uploads/${id}/${field}_${Date.now()}`);
+                await uploadBytes(fileRef, file);
+                const url = await getDownloadURL(fileRef);
+                
+                await updateDoc(doc(db, "customers", id), { 
+                    [field]: url,
+                    last_upload_date: new Date().toISOString(),
+                    last_activity: new Date().toISOString() 
+                });
+                statusEl.innerHTML = '<span class="text-green-600"><i class="fas fa-check"></i> Success</span>';
+            } catch (error) {
+                console.error(error);
+                statusEl.innerHTML = '<span class="text-red-500">Error</span>';
+            }
+        };
+
+        window.saveUserChanges = async () => {
+            const id = document.getElementById('edit-id').value;
+            const newName = document.getElementById('edit-name').value;
+            const newStatus = document.getElementById('edit-pip-status-select').value;
+
+            try {
+                await updateDoc(doc(db, "customers", id), { 
+                    full_name: newName, 
+                    pip_status: newStatus,
+                    last_activity: new Date().toISOString() 
+                });
+                closeModal('editModal');
+                Swal.fire({ title: 'Saved', icon: 'success', timer: 1000, showConfirmButton: false });
+            } catch (e) {
+                Swal.fire('Error', e.message, 'error');
+            }
+        };
+
+        // 8. CSV OPERATIONS
+        window.processCSV = () => {
+            const file = document.getElementById('csv-file').files[0];
+            if (!file) { Swal.fire('Error', 'Please select a CSV file first', 'warning'); return; }
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async (results) => {
+                    let count = 0;
+                    const batchPromises = [];
+                    for (const row of results.data) {
+                        if (row.omang) {
+                            const userRef = doc(db, "customers", "ID" + row.omang);
+                            const userData = {
+                                full_name: row.name || row.full_name,
+                                omang: row.omang,
+                                pip_status: "Not Set",    
+                                source_of_wealth: "",
+                                created_at: new Date().toISOString(),
+                                last_activity: new Date().toISOString()
+                            };
+                            batchPromises.push(setDoc(userRef, userData, { merge: true }));
+                            count++;
+                        }
+                    }
+                    await Promise.all(batchPromises);
+                    closeModal('bulkModal');
+                    Swal.fire('Success', `Imported ${count} users.`, 'success');
+                    document.getElementById('csv-file').value = '';
+                }
+            });
+        };
+
+        window.exportToCSV = () => {
+            if (filteredCustomers.length === 0) { Swal.fire('Info', 'No data to export.', 'info'); return; }
+            const cleanData = filteredCustomers.map(c => ({
+                Name: c.full_name, 
+                Omang: c.omang, 
+                Status: c.isComplete ? 'Completed' : 'Pending', 
+                Files: c.fileCount, 
+                PEP_Status: c.display_pip_status
+            }));
+            const csv = Papa.unparse(cleanData);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Letshego_KYC_Export.csv`;
+            link.click();
+        };
+
+        // 9. ANALYTICS & CHARTS
+        function updateStats() {
+            const total = allCustomers.length;
+            const pending = allCustomers.filter(c => c.fileCount === 0).length;
+            const completed = allCustomers.filter(c => c.isComplete).length;
+            const pipIssues = allCustomers.filter(c => c.display_pip_status === 'PEP').length;
+
+            animateValue("stat-total", parseInt(document.getElementById("stat-total").innerText), total, 1000);
+            animateValue("stat-pending", parseInt(document.getElementById("stat-pending").innerText), pending, 1000);
+            animateValue("stat-completed", parseInt(document.getElementById("stat-completed").innerText), completed, 1000);
+            animateValue("stat-pip", parseInt(document.getElementById("stat-pip").innerText), pipIssues, 1000);
+
+            return { total, pending, completed, pipIssues };
+        }
+
+        function updateCharts() {
+            const stats = updateStats();
+            
+            // Chart 1: Status Pie
+            if(charts.statusPie) charts.statusPie.destroy();
+            charts.statusPie = new Chart(document.getElementById('chart-status-pie'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'In Progress', 'Completed'],
+                    datasets: [{
+                        data: [stats.pending, stats.total - stats.pending - stats.completed, stats.completed],
+                        backgroundColor: ['#E2E8F0', '#F6AD55', '#05CD99'], borderWidth: 0
+                    }]
+                },
+                options: { maintainAspectRatio: false, cutout: '70%' }
+            });
+
+            // Chart 2: Interactive PIP (Donut)
+            const pipCounts = { 'Not Set': 0, 'Non-PEP': 0, 'PEP': 0 };
+            
+            allCustomers.forEach(c => {
+                const status = c.display_pip_status || 'Not Set';
+                if (status === 'PEP') pipCounts['PEP']++;
+                else if (status === 'Non-PEP') pipCounts['Non-PEP']++;
+                else pipCounts['Not Set']++;
+            });
+
+            const pipLabels = Object.keys(pipCounts);
+            const pipData = Object.values(pipCounts);
+            const pipColors = ['#E2E8F0', '#05CD99', '#EE5D50']; 
+
+            if(charts.pipDonut) charts.pipDonut.destroy();
+            charts.pipDonut = new Chart(document.getElementById('chart-pip-donut'), {
+                type: 'doughnut',
+                data: {
+                    labels: pipLabels,
+                    datasets: [{
+                        data: pipData,
+                        backgroundColor: pipColors, 
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false, cutout: '50%',
+                    plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+                    onClick: (e, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const key = pipLabels[index];
+                            handlePipClick(key);
+                        }
+                    }
+                }
+            });
+
+            // Chart 3: Daily Onboarding Activity
+            const dailyUserCounts = {};
+            allCustomers.forEach(c => {
+                if(c.created_at) {
+                    const dateKey = c.created_at.split('T')[0]; 
+                    dailyUserCounts[dateKey] = (dailyUserCounts[dateKey] || 0) + 1;
+                }
+            });
+
+            const sortedDates = Object.keys(dailyUserCounts).sort();
+            const sortedCounts = sortedDates.map(d => dailyUserCounts[d]);
+            
+            if(charts.dailyBar) charts.dailyBar.destroy();
+            charts.dailyBar = new Chart(document.getElementById('chart-daily-bar'), {
+                type: 'bar',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Unique Customers Onboarded',
+                        data: sortedCounts,
+                        backgroundColor: '#2B3674',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } },
+                    onClick: (e, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const dateKey = sortedDates[index];
+                            handleDailyClick(dateKey);
+                        }
+                    }
+                }
+            });
+
+            // Chart 4: Daily File Submission
+            const dailySubmissionCounts = {};
+            allCustomers.forEach(c => {
+                if(c.last_upload_date) {
+                    const dateKey = c.last_upload_date.split('T')[0];
+                    dailySubmissionCounts[dateKey] = (dailySubmissionCounts[dateKey] || 0) + 1;
+                }
+            });
+            const sortedSubDates = Object.keys(dailySubmissionCounts).sort();
+            const sortedSubCounts = sortedSubDates.map(d => dailySubmissionCounts[d]);
+            
+            if(charts.submissionBar) charts.submissionBar.destroy();
+            charts.submissionBar = new Chart(document.getElementById('chart-submission-bar'), {
+                type: 'bar',
+                data: {
+                    labels: sortedSubDates,
+                    datasets: [{
+                        label: 'Customers Uploaded Files',
+                        data: sortedSubCounts,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } },
+                    onClick: (e, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const dateKey = sortedSubDates[index];
+                            handleSubmissionClick(dateKey);
+                        }
+                    }
+                }
+            });
+
+            // Mini Line Chart
+            const ctxMini = document.getElementById('chart-mini-line');
+            if(ctxMini) {
+                if(charts.miniLine) charts.miniLine.destroy();
+                const last7Days = sortedDates.slice(-7);
+                const last7Counts = sortedCounts.slice(-7);
+                charts.miniLine = new Chart(ctxMini, {
+                    type: 'line',
+                    data: {
+                        labels: last7Days.length > 0 ? last7Days : ['No Data'],
+                        datasets: [{
+                            data: last7Counts.length > 0 ? last7Counts : [0],
+                            borderColor: '#FFD100',
+                            backgroundColor: 'rgba(255, 209, 0, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
+                });
+            }
+        }
+
+        // --- NEW HELPER: Render Table inside Overlay (UPDATED WITH LATEST DATE) ---
+        function renderOverlayTable(data, containerId, useLatestDate = false) {
+            const container = document.getElementById(containerId);
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 py-10">No users found for this category.</p>';
+                return;
+            }
+
+            // Determine header label based on mode
+            const dateHeader = useLatestDate === 'submission' ? 'Submission Date' : (useLatestDate ? 'Latest Activity' : 'Date Info');
+
+            let html = `
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="bg-gray-50 dark:bg-night-hover border-b border-gray-100 dark:border-night-border sticky top-0">
+                        <tr>
+                            <th class="p-3 text-xs font-semibold text-gray-500 dark:text-gray-400">Name</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500 dark:text-gray-400">Omang</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500 dark:text-gray-400">PIP Status</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500 dark:text-gray-400">${dateHeader}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-night-border">
+            `;
+
+            data.forEach(u => {
+                // FORMAT DATE AND TIME
+                // For 'submission' mode, use last_upload_date specifically
+                // For others, follow previous logic
+                let dateStr;
+                if (useLatestDate === 'submission') {
+                    dateStr = u.last_upload_date;
+                } else {
+                    dateStr = useLatestDate ? (u.latestDate || u.last_upload_date || u.created_at) : (u.created_at || u.last_upload_date);
+                }
+                
+                let formattedDate = 'N/A';
+                if (dateStr) {
+                    try {
+                        const dateObj = new Date(dateStr);
+                        // Example: "Oct 24, 2024, 2:30 PM"
+                        formattedDate = dateObj.toLocaleString('en-GB', { 
+                            dateStyle: 'medium', 
+                            timeStyle: 'short' 
+                        });
+                    } catch(e) { formattedDate = dateStr; }
+                }
+
+                html += `
+                    <tr>
+                        <td class="p-3 text-sm font-medium text-dark dark:text-white">${u.full_name}</td>
+                        <td class="p-3 text-sm text-gray-500 dark:text-gray-400">${u.omang}</td>
+                        <td class="p-3 text-sm">
+                            <span class="${u.display_pip_status === 'PEP' ? 'text-red-600 dark:text-red-400 font-bold' : 'text-gray-600 dark:text-gray-400'}">${u.display_pip_status}</span>
+                        </td>
+                        <td class="p-3 text-xs text-gray-400 dark:text-gray-500 font-mono">
+                             ${formattedDate}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // --- PIP INTERACTION HANDLERS ---
+        function handlePipClick(key) {
+            let matches = allCustomers.filter(c => c.display_pip_status === key);
+            selectedPipStatusForDownload = key; 
+            
+            document.getElementById('pip-overlay-title').innerText = `${key} Users`;
+            document.getElementById('pip-overlay-count').innerText = `${matches.length} Records Found`;
+            
+            // Render with TRUE for useLatestDate
+            renderOverlayTable(matches, 'pip-list-container', true); 
+            
+            const overlay = document.getElementById('pip-chart-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        window.downloadPipList = () => {
+            if (selectedPipStatusForDownload === null) return;
+            const data = allCustomers.filter(c => c.display_pip_status === selectedPipStatusForDownload);
+            const filenameLabel = selectedPipStatusForDownload === '' ? 'Not_Set' : selectedPipStatusForDownload;
+            const safeFilename = filenameLabel.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            
+            const csv = Papa.unparse(data.map(u => ({ 
+                Name: u.full_name, 
+                Omang: u.omang, 
+                PEP_Status: u.display_pip_status, 
+                // Use Latest Activity Date
+                Latest_Activity: u.latestDate || u.created_at
+            })));
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `PEP_List_${safeFilename}.csv`;
+            link.click();
+        };
+
+        window.closePipOverlay = () => {
+            const overlay = document.getElementById('pip-chart-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        };
+
+        // --- DAILY INTERACTION HANDLERS ---
+        function handleDailyClick(dateKey) {
+            const matches = allCustomers.filter(c => c.created_at && c.created_at.startsWith(dateKey));
+            selectedDateForDownload = dateKey;
+            
+            document.getElementById('daily-overlay-title').innerText = `Onboarding: ${dateKey}`;
+            document.getElementById('daily-overlay-count').innerText = `${matches.length} Users Onboarded`;
+            
+            renderOverlayTable(matches, 'daily-list-container', false);
+
+            const overlay = document.getElementById('daily-chart-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        window.downloadDailyList = () => {
+            if (!selectedDateForDownload) return;
+            const data = allCustomers.filter(c => c.created_at && c.created_at.startsWith(selectedDateForDownload));
+            const csv = Papa.unparse(data.map(u => ({ Name: u.full_name, Omang: u.omang, OnboardingDate: u.created_at })));
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Onboarding_Activity_${selectedDateForDownload}.csv`;
+            link.click();
+        };
+
+        window.closeDailyOverlay = () => {
+            const overlay = document.getElementById('daily-chart-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        };
+
+        // --- SUBMISSION HANDLERS ---
+        function handleSubmissionClick(dateKey) {
+            const matches = allCustomers.filter(c => c.last_upload_date && c.last_upload_date.startsWith(dateKey));
+            selectedSubmissionDateForDownload = dateKey;
+            
+            document.getElementById('submission-overlay-title').innerText = `Submissions: ${dateKey}`;
+            document.getElementById('submission-overlay-count').innerText = `${matches.length} Users Uploaded`;
+            
+            // FIX: Pass 'submission' to use last_upload_date instead of created_at
+            renderOverlayTable(matches, 'submission-list-container', 'submission');
+
+            const overlay = document.getElementById('submission-chart-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        window.downloadSubmissionList = () => {
+            if (!selectedSubmissionDateForDownload) return;
+            const data = allCustomers.filter(c => c.last_upload_date && c.last_upload_date.startsWith(selectedSubmissionDateForDownload));
+            const csv = Papa.unparse(data.map(u => ({ Name: u.full_name, Omang: u.omang, LastUploadDate: u.last_upload_date })));
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Submission_Activity_${selectedSubmissionDateForDownload}.csv`;
+            link.click();
+        };
+
+        window.closeSubmissionOverlay = () => {
+            const overlay = document.getElementById('submission-chart-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        };
+
+        // Utilities
+        window.getInitials = (name) => {
+            if (!name) return '?';
+            const parts = name.split(' ');
+            return parts.length === 1 ? parts[0].substring(0, 2).toUpperCase() : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        };
+        window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+        
+        window.deleteUser = async (id) => {
+            const result = await Swal.fire({
+                title: 'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#EE5D50', confirmButtonText: 'Yes'
+            });
+            if (result.isConfirmed) await deleteDoc(doc(db, "customers", id));
+        };
+
+        window.logout = () => {
+            document.getElementById('app-layout').classList.add('opacity-0');
+            setTimeout(() => location.reload(), 500);
+        };
+        
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            const obj = document.getElementById(id);
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            const timer = setInterval(() => {
+                current += increment;
+                obj.innerText = current;
+                if (current == end) clearInterval(timer);
+            }, stepTime > 0 ? stepTime : 10);
+        }
+
+        // Expose to window
+        window.navTo = navTo;
+        window.renderTable = renderTable;
+        window.processCSV = processCSV;
+        window.exportToCSV = exportToCSV;
+        window.editUser = editUser;
+        window.uploadFile = uploadFile;
+        window.saveUserChanges = saveUserChanges;
+        
+        window.downloadPipList = downloadPipList;
+        window.closePipOverlay = closePipOverlay;
+        
+        window.downloadDailyList = downloadDailyList;
+        window.closeDailyOverlay = closeDailyOverlay;
+
+        window.downloadSubmissionList = downloadSubmissionList;
+        window.closeSubmissionOverlay = closeSubmissionOverlay;
+        window.toggleTheme = toggleTheme;
+    </script>
+</body>
+</html>
