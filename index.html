@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Letshego e-KYC Enterprise Admin</title>
     
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -28,7 +26,7 @@
                         night: {
                             bg: '#09090b',        // Deepest black/zinc
                             card: '#18181b',      // Card bg
-                            hover: '#27272a',     // Hover state
+                            hover: '#27272a',      // Hover state
                             border: '#3f3f46',    // Borders
                             text: '#e4e4e7',      // Main text
                             muted: '#a1a1aa'      // Muted text
@@ -45,7 +43,6 @@
         }
     </script>
 
-    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -148,15 +145,12 @@
 </head>
 <body class="bg-light dark:bg-night-bg text-dark dark:text-night-text overflow-hidden h-screen flex flex-col">
 
-    <!-- LOGIN OVERLAY -->
     <div id="login-overlay" class="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-900 bg-opacity-95 transition-opacity duration-500">
         <div class="bg-white dark:bg-night-card rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100 border dark:border-night-border mx-4 card-transition">
             <div class="text-center mb-8">
                 <div class="flex justify-center mb-6">
-                    <!-- Logo Image (No text next to it) -->
                     <img src="letsgo.png" alt="Letshego Logo" class="h-24 w-auto object-contain">
                 </div>
-                <!-- Removed "Letshego" text, just Admin subtitle -->
                 <h1 class="text-2xl font-bold text-dark dark:text-white">Enterprise Admin</h1>
                 <p class="text-grey text-sm">e-KYC Portal Access</p>
             </div>
@@ -182,19 +176,14 @@
         </div>
     </div>
 
-    <!-- MAIN APP LAYOUT (Hidden until login) -->
     <div id="app-layout" class="flex h-screen opacity-0 pointer-events-none transition-opacity duration-500 relative">
         
-        <!-- MOBILE SIDEBAR OVERLAY -->
         <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden glass-effect transition-opacity"></div>
 
-        <!-- SIDEBAR (Responsive) -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-night-card shadow-xl flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative border-r dark:border-night-border">
             <div class="p-6 flex items-center justify-center border-b border-gray-100 dark:border-night-border h-24">
-                <!-- Sidebar Logo (Text removed as requested) -->
                 <img src="letsgo.png" alt="Letshego" class="h-16 w-auto object-contain">
                 
-                <!-- Close button mobile only -->
                 <button onclick="toggleSidebar()" class="md:hidden text-gray-500 dark:text-gray-300 absolute right-4">
                     <i class="fas fa-times text-xl"></i>
                 </button>
@@ -216,7 +205,6 @@
             </nav>
 
             <div class="p-4 border-t border-gray-100 dark:border-night-border space-y-3">
-                <!-- Dark Mode Toggle -->
                 <div class="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-night-hover rounded-xl card-transition">
                     <span class="text-sm font-medium text-gray-600 dark:text-gray-300"><i class="fas fa-moon mr-2"></i>Night Mode</span>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -232,12 +220,9 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col relative overflow-hidden bg-light dark:bg-night-bg w-full">
-            <!-- HEADER -->
             <header class="h-20 bg-light/50 dark:bg-night-bg/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 border-b border-transparent dark:border-night-border">
                 <div class="flex items-center gap-4">
-                    <!-- Mobile Menu Button -->
                     <button onclick="toggleSidebar()" class="md:hidden text-dark dark:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-night-hover">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
@@ -257,14 +242,10 @@
                 </div>
             </header>
 
-            <!-- SCROLLABLE CONTENT AREA -->
             <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" id="main-scroll-area">
                 
-                <!-- 1. DASHBOARD VIEW -->
                 <section id="view-dashboard" class="space-y-6">
-                    <!-- Stats Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                        <!-- Stat Card 1 -->
                         <div class="bg-white dark:bg-night-card p-5 md:p-6 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-all dark:border dark:border-night-border card-transition">
                             <div>
                                 <p class="text-grey text-xs md:text-sm font-medium mb-1">Total Customers</p>
@@ -274,7 +255,6 @@
                                 <i class="fas fa-users"></i>
                             </div>
                         </div>
-                        <!-- Stat Card 2 -->
                         <div class="bg-white dark:bg-night-card p-5 md:p-6 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-all dark:border dark:border-night-border card-transition">
                             <div>
                                 <p class="text-grey text-xs md:text-sm font-medium mb-1">Pending Files</p>
@@ -284,7 +264,6 @@
                                 <i class="fas fa-clock"></i>
                             </div>
                         </div>
-                        <!-- Stat Card 3 -->
                         <div class="bg-white dark:bg-night-card p-5 md:p-6 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-all dark:border dark:border-night-border card-transition">
                             <div>
                                 <p class="text-grey text-xs md:text-sm font-medium mb-1">Completed KYC</p>
@@ -294,10 +273,9 @@
                                 <i class="fas fa-check-circle"></i>
                             </div>
                         </div>
-                        <!-- Stat Card 4 -->
                         <div class="bg-white dark:bg-night-card p-5 md:p-6 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-all dark:border dark:border-night-border card-transition">
                             <div>
-                                <p class="text-grey text-xs md:text-sm font-medium mb-1">PEP Detected</p>
+                                <p class="text-grey text-xs md:text-sm font-medium mb-1">PIP Detected</p>
                                 <h3 class="text-2xl md:text-3xl font-bold text-dark dark:text-white" id="stat-pip">0</h3>
                             </div>
                             <div class="h-10 w-10 md:h-12 md:w-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-danger text-lg md:text-xl">
@@ -306,7 +284,6 @@
                         </div>
                     </div>
 
-                    <!-- Quick Actions & Mini Chart -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm dark:border dark:border-night-border card-transition">
                             <h3 class="font-bold text-lg mb-4 text-dark dark:text-white">Onboarding Trends (Last 7 Days)</h3>
@@ -327,12 +304,9 @@
                     </div>
                 </section>
 
-                <!-- 2. USER MANAGEMENT VIEW -->
                 <section id="view-users" class="hidden space-y-6">
-                    <!-- Controls Toolbar -->
                     <div class="bg-white dark:bg-night-card p-4 rounded-2xl shadow-sm flex flex-col xl:flex-row gap-4 justify-between items-stretch xl:items-center dark:border dark:border-night-border card-transition">
                         <div class="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
-                            <!-- Custom Status Filter -->
                             <div class="relative w-full md:w-auto">
                                 <select id="filter-status" onchange="renderTable()" class="w-full md:w-auto appearance-none bg-light dark:bg-night-hover dark:text-white border border-transparent hover:border-gray-200 dark:border-night-border pl-4 pr-10 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm font-medium cursor-pointer transition-colors">
                                     <option value="all">All Statuses</option>
@@ -345,7 +319,6 @@
                                 </div>
                             </div>
 
-                            <!-- Search -->
                             <div class="relative w-full md:w-64">
                                 <span class="absolute left-3 top-2.5 text-gray-400 text-sm"><i class="fas fa-search"></i></span>
                                 <input type="text" id="table-search" onkeyup="renderTable()" placeholder="Search Name or ID..." class="w-full bg-light dark:bg-night-hover dark:text-white pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
@@ -362,7 +335,6 @@
                         </div>
                     </div>
 
-                    <!-- Main Table -->
                     <div class="bg-white dark:bg-night-card rounded-2xl shadow-sm overflow-hidden dark:border dark:border-night-border card-transition">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse min-w-[800px]">
@@ -377,8 +349,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="users-table-body" class="divide-y divide-gray-50 dark:divide-night-border">
-                                    <!-- Rows rendered via JS -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                         <div id="table-empty-state" class="hidden p-12 text-center">
@@ -392,10 +363,8 @@
                     </div>
                 </section>
 
-                <!-- 3. ANALYTICS VIEW -->
                 <section id="view-analytics" class="hidden space-y-6">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Chart 1: Status Distribution -->
                         <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm dark:border dark:border-night-border card-transition">
                             <h3 class="font-bold text-lg mb-2 text-dark dark:text-white">Onboarding Status Distribution</h3>
                             <p class="text-xs text-grey dark:text-gray-400 mb-6">Breakdown of user progress in the KYC pipeline.</p>
@@ -404,17 +373,15 @@
                             </div>
                         </div>
 
-                        <!-- Chart 2: Interactive PIP Status -->
                         <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm relative dark:border dark:border-night-border card-transition">
                             <h3 class="font-bold text-lg mb-2 text-dark dark:text-white">PIP Risk Analysis</h3>
-                            <p class="text-xs text-grey dark:text-gray-400 mb-6">Breakdown of PEP (Politically Exposed Persons) vs Non-PEP.</p>
+                            <p class="text-xs text-grey dark:text-gray-400 mb-6">Breakdown of PIP vs Non-PIP.</p>
                             <div class="chart-container">
                                 <canvas id="chart-pip-donut"></canvas>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Chart 3: Daily Onboarding Activity (User Count) -->
                     <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm relative mt-6 dark:border dark:border-night-border card-transition">
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                             <div>
@@ -422,10 +389,8 @@
                                 <p class="text-xs text-grey dark:text-gray-400">Number of unique customers onboarded per day.</p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <!-- Month Selector Dropdown -->
                                 <select id="daily-month-filter" onchange="updateDailyChart()" class="text-xs bg-gray-100 dark:bg-zinc-800 border-none rounded-lg px-2 py-1 focus:ring-1 focus:ring-primary dark:text-white cursor-pointer">
-                                    <!-- Populated by JS -->
-                                </select>
+                                    </select>
                                 <span class="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded">Click bar to view</span>
                             </div>
                         </div>
@@ -434,7 +399,6 @@
                         </div>
                     </div>
 
-                    <!-- Chart 4: Daily File Submission Activity -->
                     <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm relative mt-6 dark:border dark:border-night-border card-transition">
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                             <div>
@@ -442,10 +406,8 @@
                                 <p class="text-xs text-grey dark:text-gray-400">Number of unique customers who uploaded files per day.</p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <!-- Month Selector Dropdown -->
                                 <select id="submission-month-filter" onchange="updateSubmissionChart()" class="text-xs bg-gray-100 dark:bg-zinc-800 border-none rounded-lg px-2 py-1 focus:ring-1 focus:ring-primary dark:text-white cursor-pointer">
-                                    <!-- Populated by JS -->
-                                </select>
+                                    </select>
                                 <span class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">Click bar to view</span>
                             </div>
                         </div>
@@ -454,7 +416,6 @@
                         </div>
                     </div>
 
-                    <!-- OVERLAY FOR PIP CLICK -->
                     <div class="fixed inset-0 bg-white/95 dark:bg-night-bg/95 backdrop-blur-md hidden flex-col items-center justify-center z-50 transition-colors duration-300 p-4" id="pip-chart-overlay">
                         <div class="bg-white dark:bg-night-card p-6 rounded-xl shadow-2xl border border-gray-200 dark:border-night-border w-full max-w-3xl h-[80vh] flex flex-col">
                             <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
@@ -471,14 +432,11 @@
                                     </button>
                                 </div>
                             </div>
-                            <!-- List Container -->
                             <div class="flex-1 overflow-y-auto overflow-x-auto" id="pip-list-container">
-                                <!-- Table Rendered Here -->
-                            </div>
+                                </div>
                         </div>
                     </div>
 
-                    <!-- OVERLAY FOR DAILY CHART CLICK -->
                     <div class="fixed inset-0 bg-white/95 dark:bg-night-bg/95 backdrop-blur-md hidden flex-col items-center justify-center z-50 transition-colors duration-300 p-4" id="daily-chart-overlay">
                         <div class="bg-white dark:bg-night-card p-6 rounded-xl shadow-2xl border border-gray-200 dark:border-night-border w-full max-w-3xl h-[80vh] flex flex-col">
                             <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
@@ -499,7 +457,6 @@
                         </div>
                     </div>
 
-                    <!-- OVERLAY FOR SUBMISSION CHART CLICK -->
                     <div class="fixed inset-0 bg-white/95 dark:bg-night-bg/95 backdrop-blur-md hidden flex-col items-center justify-center z-50 transition-colors duration-300 p-4" id="submission-chart-overlay">
                         <div class="bg-white dark:bg-night-card p-6 rounded-xl shadow-2xl border border-gray-200 dark:border-night-border w-full max-w-3xl h-[80vh] flex flex-col">
                             <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
@@ -525,7 +482,6 @@
         </main>
     </div>
 
-    <!-- BULK UPLOAD / ADD USER MODAL (TABS) -->
     <div id="bulkModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-night-card rounded-2xl shadow-2xl p-6 w-full max-w-lg border dark:border-night-border card-transition">
             <div class="flex justify-between items-center mb-4">
@@ -533,13 +489,11 @@
                 <button onclick="closeModal('bulkModal')" class="text-gray-400 hover:text-black dark:hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
             </div>
             
-            <!-- Tabs -->
             <div class="flex gap-6 border-b border-gray-200 dark:border-night-border mb-6">
                 <button onclick="switchImportTab('csv')" id="tab-csv" class="tab-btn active text-sm pb-2">Upload CSV</button>
                 <button onclick="switchImportTab('manual')" id="tab-manual" class="tab-btn text-sm pb-2">Manual Entry</button>
             </div>
 
-            <!-- TAB 1: CSV Upload -->
             <div id="content-csv">
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-primary p-4 mb-6 rounded-r-lg">
                     <h4 class="font-bold text-sm text-yellow-800 dark:text-yellow-200 mb-1">CSV Requirements</h4>
@@ -557,7 +511,6 @@
                 </div>
             </div>
 
-            <!-- TAB 2: Manual Entry -->
             <div id="content-manual" class="hidden">
                 <div class="space-y-4">
                     <div>
@@ -577,7 +530,6 @@
         </div>
     </div>
 
-    <!-- EDIT USER MODAL -->
     <div id="editModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-night-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border dark:border-night-border flex flex-col card-transition">
             <div class="p-6 border-b border-gray-100 dark:border-night-border flex justify-between items-center sticky top-0 bg-white dark:bg-night-card z-10">
@@ -588,7 +540,6 @@
             <div class="p-8 space-y-6 flex-1 overflow-y-auto">
                 <input type="hidden" id="edit-id">
                 
-                <!-- Info Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
@@ -598,13 +549,12 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIP / Risk Status</label>
                         <select id="edit-pip-status-select" class="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 dark:bg-zinc-800 dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:outline-none transition-colors">
                             <option value="Not Set">Not Set</option>
-                            <option value="Non-PEP">Non-PEP</option>
-                            <option value="PEP">PEP (Politically Exposed)</option>
+                            <option value="Non-PIP">Non-PIP</option>
+                            <option value="PIP">PIP</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Source of Wealth (Read Only, hidden if empty) -->
                 <div id="wealth-field-container" class="hidden bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-700">
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                         <i class="fas fa-coins mr-1 text-primary"></i> Source of Wealth 
@@ -613,11 +563,9 @@
                     <input type="text" id="edit-source-wealth" readonly class="w-full px-4 py-2 border border-gray-200 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 rounded-xl text-gray-600 dark:text-gray-400 focus:outline-none cursor-not-allowed">
                 </div>
 
-                <!-- Files (All 5 Types) -->
                 <div>
                     <h4 class="font-bold text-md mb-4 border-b border-gray-100 dark:border-night-border pb-2 text-dark dark:text-white">Documents (Need 3 total, Omang is mandatory)</h4>
                     <div class="space-y-4">
-                        <!-- Omang -->
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
                             <div class="flex items-center gap-4 w-full sm:w-auto">
                                 <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-id-card text-teal-600"></i></div>
@@ -633,7 +581,6 @@
                             </div>
                         </div>
                         
-                        <!-- Payslip -->
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
                             <div class="flex items-center gap-4 w-full sm:w-auto">
                                 <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-money-bill-wave text-blue-600"></i></div>
@@ -649,7 +596,6 @@
                             </div>
                         </div>
 
-                        <!-- Utility Bill -->
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
                             <div class="flex items-center gap-4 w-full sm:w-auto">
                                 <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-bolt text-purple-600"></i></div>
@@ -665,7 +611,6 @@
                             </div>
                         </div>
 
-                        <!-- Confirmation Letter -->
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
                             <div class="flex items-center gap-4 w-full sm:w-auto">
                                 <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-envelope-open-text text-orange-600"></i></div>
@@ -681,7 +626,6 @@
                             </div>
                         </div>
 
-                        <!-- Affidavit -->
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border border-gray-100 dark:border-night-border rounded-xl bg-gray-50 dark:bg-night-hover">
                             <div class="flex items-center gap-4 w-full sm:w-auto">
                                 <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-gavel text-gray-600"></i></div>
@@ -707,7 +651,6 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script type="module">
         // 1. CONFIGURATION
         const firebaseConfig = {
@@ -943,10 +886,10 @@
 
                 if (pStatus === 'Not Set') {
                     pipBadge = `<span class="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-2 py-1 rounded text-[10px] font-semibold">Not Set</span>`;
-                } else if (pStatus === 'Non-PEP') {
-                    pipBadge = `<span class="bg-green-100 dark:bg-green-900/40 text-success border border-green-200 dark:border-green-800 px-2 py-1 rounded text-[10px] font-bold"><i class="fas fa-shield-alt mr-1"></i>Non-PEP</span>`;
-                } else if (pStatus === 'PEP') {
-                    pipBadge = `<span class="bg-red-50 dark:bg-red-900/40 text-danger border border-red-100 dark:border-red-800 px-2 py-1 rounded text-[10px] font-bold"><i class="fas fa-exclamation-circle mr-1"></i>PEP</span>`;
+                } else if (pStatus === 'Non-PIP' || pStatus === 'Non-PEP') {
+                    pipBadge = `<span class="bg-green-100 dark:bg-green-900/40 text-success border border-green-200 dark:border-green-800 px-2 py-1 rounded text-[10px] font-bold"><i class="fas fa-shield-alt mr-1"></i>Non-PIP</span>`;
+                } else if (pStatus === 'PIP' || pStatus === 'PEP') {
+                    pipBadge = `<span class="bg-red-50 dark:bg-red-900/40 text-danger border border-red-100 dark:border-red-800 px-2 py-1 rounded text-[10px] font-bold"><i class="fas fa-exclamation-circle mr-1"></i>PIP</span>`;
                 }
 
                 tr.innerHTML = `
@@ -985,8 +928,11 @@
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = user.full_name || '';
             
-            // Populate Direct PIP Status
-            document.getElementById('edit-pip-status-select').value = user.pip_status || 'Not Set';
+            // Populate Direct PIP Status (normalize display)
+            let currentStatus = user.pip_status || 'Not Set';
+            if (currentStatus === 'PEP') currentStatus = 'PIP';
+            if (currentStatus === 'Non-PEP') currentStatus = 'Non-PIP';
+            document.getElementById('edit-pip-status-select').value = currentStatus;
             
             // Source of Wealth Logic (Hidden unless populated, Read Only for Admin)
             const wealthContainer = document.getElementById('wealth-field-container');
@@ -1249,7 +1195,7 @@
                 Omang: c.omang, 
                 Status: c.isComplete ? 'Completed' : 'Pending', 
                 Files: c.fileCount, 
-                PEP_Status: c.display_pip_status,
+                PIP_Status: c.display_pip_status,
                 // Added File URLs columns
                 Omang_URL: c.omang_file_url || '',
                 Payslip_URL: c.payslip_url || '',
@@ -1270,7 +1216,7 @@
             const total = allCustomers.length;
             const pending = allCustomers.filter(c => c.fileCount === 0).length;
             const completed = allCustomers.filter(c => c.isComplete).length;
-            const pipIssues = allCustomers.filter(c => c.display_pip_status === 'PEP').length;
+            const pipIssues = allCustomers.filter(c => c.display_pip_status === 'PIP' || c.display_pip_status === 'PEP').length;
 
             animateValue("stat-total", parseInt(document.getElementById("stat-total").innerText), total, 1000);
             animateValue("stat-pending", parseInt(document.getElementById("stat-pending").innerText), pending, 1000);
@@ -1349,12 +1295,15 @@
             });
 
             // Chart 2: Interactive PIP (Donut)
-            const pipCounts = { 'Not Set': 0, 'Non-PEP': 0, 'PEP': 0 };
+            const pipCounts = { 'Not Set': 0, 'Non-PIP': 0, 'PIP': 0 };
             
             allCustomers.forEach(c => {
-                const status = c.display_pip_status || 'Not Set';
-                if (status === 'PEP') pipCounts['PEP']++;
-                else if (status === 'Non-PEP') pipCounts['Non-PEP']++;
+                let status = c.display_pip_status || 'Not Set';
+                if (status === 'PEP') status = 'PIP';
+                if (status === 'Non-PEP') status = 'Non-PIP';
+                
+                if (status === 'PIP') pipCounts['PIP']++;
+                else if (status === 'Non-PIP') pipCounts['Non-PIP']++;
                 else pipCounts['Not Set']++;
             });
 
@@ -1579,12 +1528,17 @@
                     } catch(e) { formattedDate = dateStr; }
                 }
 
+                // Normalizing display for PIP in overlay
+                let displayStatus = u.display_pip_status;
+                if (displayStatus === 'PEP') displayStatus = 'PIP';
+                if (displayStatus === 'Non-PEP') displayStatus = 'Non-PIP';
+
                 html += `
                     <tr>
                         <td class="p-3 text-sm font-medium text-dark dark:text-white">${u.full_name}</td>
                         <td class="p-3 text-sm text-gray-500 dark:text-gray-400">${u.omang}</td>
                         <td class="p-3 text-sm">
-                            <span class="${u.display_pip_status === 'PEP' ? 'text-red-600 dark:text-red-400 font-bold' : 'text-gray-600 dark:text-gray-400'}">${u.display_pip_status}</span>
+                            <span class="${displayStatus === 'PIP' ? 'text-red-600 dark:text-red-400 font-bold' : 'text-gray-600 dark:text-gray-400'}">${displayStatus}</span>
                         </td>
                         <td class="p-3 text-xs text-gray-400 dark:text-gray-500 font-mono">
                              ${formattedDate}
@@ -1599,7 +1553,12 @@
 
         // --- PIP INTERACTION HANDLERS ---
         function handlePipClick(key) {
-            let matches = allCustomers.filter(c => c.display_pip_status === key);
+            let matches = allCustomers.filter(c => {
+                let status = c.display_pip_status;
+                if (status === 'PEP') status = 'PIP';
+                if (status === 'Non-PEP') status = 'Non-PIP';
+                return status === key;
+            });
             selectedPipStatusForDownload = key; 
             
             document.getElementById('pip-overlay-title').innerText = `${key} Users`;
@@ -1615,14 +1574,19 @@
 
         window.downloadPipList = () => {
             if (selectedPipStatusForDownload === null) return;
-            const data = allCustomers.filter(c => c.display_pip_status === selectedPipStatusForDownload);
+            const data = allCustomers.filter(c => {
+                let status = c.display_pip_status;
+                if (status === 'PEP') status = 'PIP';
+                if (status === 'Non-PEP') status = 'Non-PIP';
+                return status === selectedPipStatusForDownload;
+            });
             const filenameLabel = selectedPipStatusForDownload === '' ? 'Not_Set' : selectedPipStatusForDownload;
             const safeFilename = filenameLabel.replace(/[^a-z0-9]/gi, '_').toLowerCase();
             
             const csv = Papa.unparse(data.map(u => ({ 
                 Name: u.full_name, 
                 Omang: u.omang, 
-                PEP_Status: u.display_pip_status, 
+                PIP_Status: selectedPipStatusForDownload, 
                 // Use Latest Activity Date
                 Latest_Activity: u.latestDate || u.created_at
             })));
@@ -1630,7 +1594,7 @@
             const blob = new Blob([csv], { type: 'text/csv' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `PEP_List_${safeFilename}.csv`;
+            link.download = `PIP_List_${safeFilename}.csv`;
             link.click();
         };
 
