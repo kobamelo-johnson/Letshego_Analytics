@@ -22,14 +22,13 @@
                         grey: '#A3AED0',
                         success: '#05CD99',
                         danger: '#EE5D50',
-                        // Cool Night Mode Specifics (Zinc/Slate)
                         night: {
-                            bg: '#09090b',        // Deepest black/zinc
-                            card: '#18181b',      // Card bg
-                            hover: '#27272a',      // Hover state
-                            border: '#3f3f46',    // Borders
-                            text: '#e4e4e7',      // Main text
-                            muted: '#a1a1aa'      // Muted text
+                            bg: '#09090b',        
+                            card: '#18181b',      
+                            hover: '#27272a',      
+                            border: '#3f3f46',    
+                            text: '#e4e4e7',      
+                            muted: '#a1a1aa'      
                         }
                     },
                     fontFamily: {
@@ -49,7 +48,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
@@ -73,7 +71,6 @@
             width: 100%;
         }
 
-        /* File Chips */
         .file-chip {
             display: inline-flex;
             align-items: center;
@@ -91,7 +88,6 @@
             color: #4a5568;
             white-space: nowrap;
         }
-        /* Dark Mode File Chips */
         .dark .file-chip {
             background: #27272a;
             border-color: #3f3f46;
@@ -101,7 +97,6 @@
         .file-chip:hover { transform: translateY(-2px); border-color: #FFD100; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .file-chip i { color: #FFD100; } 
 
-        /* Tabs in Modal */
         .tab-btn.active {
             border-bottom: 2px solid #FFD100;
             color: #000;
@@ -117,16 +112,9 @@
             transition: all 0.2s;
         }
 
-        /* Toggle Switch */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #FFD100;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #FFD100;
-        }
+        .toggle-checkbox:checked { right: 0; border-color: #FFD100; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #FFD100; }
         
-        /* Input Autofill Fix for Dark Mode */
         .dark input:-webkit-autofill,
         .dark input:-webkit-autofill:hover, 
         .dark input:-webkit-autofill:focus, 
@@ -135,12 +123,10 @@
             -webkit-text-fill-color: white !important;
         }
 
-        /* Smooth Transition for Theme */
         body, main, aside, header, .card-transition {
             transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.5s ease, transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        /* Mobile Adjustments */
         @media (max-width: 768px) {
             .chart-container { height: 250px; }
             .nav-btn span { font-size: 0.9rem; }
@@ -205,6 +191,10 @@
                 <button onclick="navTo('analytics'); toggleSidebarIfMobile()" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-light dark:hover:bg-night-hover hover:text-primary transition-all group" id="nav-analytics">
                     <i class="fas fa-chart-pie text-lg group-hover:scale-110 transition-transform"></i>
                     <span class="font-medium">Analytics & Reports</span>
+                </button>
+                <button onclick="navTo('advanced'); toggleSidebarIfMobile()" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-light dark:hover:bg-night-hover hover:text-primary transition-all group" id="nav-advanced">
+                    <i class="fas fa-rocket text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Advanced BI</span>
                 </button>
             </nav>
 
@@ -290,7 +280,10 @@
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow dark:border dark:border-night-border card-transition">
-                            <h3 class="font-bold text-lg mb-4 text-dark dark:text-white">Onboarding Trends (Last 7 Days)</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-lg text-dark dark:text-white">Onboarding Trends (Last 7 Days)</h3>
+                                <button onclick="downloadTrendsCSV()" class="text-xs bg-gray-100 dark:bg-night-hover text-gray-600 dark:text-gray-300 px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shadow-sm font-medium"><i class="fas fa-file-download mr-1"></i> CSV</button>
+                            </div>
                             <div class="chart-container">
                                 <canvas id="chart-mini-line"></canvas>
                             </div>
@@ -373,7 +366,10 @@
                 <section id="view-analytics" class="hidden space-y-6">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow dark:border dark:border-night-border card-transition">
-                            <h3 class="font-bold text-lg mb-2 text-dark dark:text-white">Onboarding Status Distribution</h3>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-lg text-dark dark:text-white">Onboarding Status Distribution</h3>
+                                <button onclick="downloadStatusCSV()" class="text-xs bg-gray-100 dark:bg-night-hover text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shadow-sm font-medium"><i class="fas fa-file-download mr-1"></i>CSV</button>
+                            </div>
                             <p class="text-xs text-grey dark:text-gray-400 mb-6">Breakdown of user progress in the KYC pipeline.</p>
                             <div class="chart-container flex justify-center">
                                 <canvas id="chart-status-pie"></canvas>
@@ -381,7 +377,10 @@
                         </div>
 
                         <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative dark:border dark:border-night-border card-transition">
-                            <h3 class="font-bold text-lg mb-2 text-dark dark:text-white">PIP ANALYSES</h3>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-lg text-dark dark:text-white">PIP ANALYSES</h3>
+                                <button onclick="downloadPipSummaryCSV()" class="text-xs bg-gray-100 dark:bg-night-hover text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shadow-sm font-medium"><i class="fas fa-file-download mr-1"></i>CSV</button>
+                            </div>
                             <p class="text-xs text-grey dark:text-gray-400 mb-6">Breakdown of comprehensive PIP statuses.</p>
                             <div class="chart-container">
                                 <canvas id="chart-pip-donut"></canvas>
@@ -392,13 +391,42 @@
                     <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative mt-6 dark:border dark:border-night-border card-transition">
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                             <div>
-                                <h3 class="font-bold text-lg text-dark dark:text-white">Daily Onboarding Activity</h3>
-                                <p class="text-xs text-grey dark:text-gray-400">Number of unique customers onboarded per day.</p>
+                                <h3 class="font-bold text-lg text-dark dark:text-white">File Submission Timeline</h3>
+                                <p class="text-xs text-grey dark:text-gray-400">Track volume of specific documents uploaded over time.</p>
                             </div>
                             <div class="flex items-center gap-3">
+                                <select id="yield-period-filter" onchange="updateDocumentYieldChart()" class="text-xs bg-gray-100 dark:bg-zinc-800 border-none rounded-lg px-2 py-1 focus:ring-1 focus:ring-primary dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                                <select id="yield-month-filter" onchange="updateDocumentYieldChart()" class="text-xs bg-gray-100 dark:bg-zinc-800 border-none rounded-lg px-2 py-1 focus:ring-1 focus:ring-primary dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+                                </select>
+                                <span class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 px-2 py-1 rounded shadow-sm hidden md:inline">Click bar to view funnel</span>
+                                <button onclick="downloadDocumentYieldCSV()" class="text-xs bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors shadow-sm font-medium"><i class="fas fa-file-download mr-1"></i>CSV</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-document-yield"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative mt-6 dark:border dark:border-night-border card-transition">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                            <div>
+                                <h3 class="font-bold text-lg text-dark dark:text-white">Customer Activity Timeline</h3>
+                                <p class="text-xs text-grey dark:text-gray-400">Track unique customers based on their latest action.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <select id="daily-period-filter" onchange="updateDailyChart()" class="text-xs bg-gray-100 dark:bg-zinc-800 border-none rounded-lg px-2 py-1 focus:ring-1 focus:ring-primary dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
                                 <select id="daily-month-filter" onchange="updateDailyChart()" class="text-xs bg-gray-100 dark:bg-zinc-800 border-none rounded-lg px-2 py-1 focus:ring-1 focus:ring-primary dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
                                     </select>
-                                <span class="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded shadow-sm">Click bar to view</span>
+                                <span class="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded shadow-sm hidden md:inline">Click bar to view</span>
+                                <button onclick="downloadDailySummaryCSV()" class="text-xs bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded shadow-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors font-medium"><i class="fas fa-file-download mr-1"></i><span class="hidden md:inline">CSV</span></button>
                             </div>
                         </div>
                         <div class="chart-container">
@@ -415,11 +443,35 @@
                             <div class="flex items-center gap-3">
                                 <select id="submission-month-filter" onchange="updateSubmissionChart()" class="text-xs bg-gray-100 dark:bg-zinc-800 border-none rounded-lg px-2 py-1 focus:ring-1 focus:ring-primary dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
                                     </select>
-                                <span class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded shadow-sm">Click bar to view</span>
+                                <span class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded shadow-sm hidden md:inline">Click bar to view</span>
+                                <button onclick="downloadSubmissionSummaryCSV()" class="text-xs bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded shadow-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors font-medium"><i class="fas fa-file-download mr-1"></i><span class="hidden md:inline">CSV</span></button>
                             </div>
                         </div>
                         <div class="chart-container">
                             <canvas id="chart-submission-bar"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="fixed inset-0 bg-black/40 backdrop-blur-md hidden flex-col items-center justify-center z-50 transition-all duration-300 p-4 opacity-0" id="yield-chart-overlay">
+                        <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-2xl border border-gray-200 dark:border-night-border w-full max-w-5xl h-[90vh] flex flex-col transform transition-transform scale-95">
+                            <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
+                                <div>
+                                    <h4 class="font-bold text-lg mb-1 text-dark dark:text-white" id="yield-overlay-title">Progression Funnel</h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" id="yield-overlay-count">0 Users</p>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <button onclick="downloadYieldList()" class="px-3 py-2 rounded-lg bg-primary text-black hover:bg-yellow-400 hover:-translate-y-0.5 text-sm font-medium shadow-sm transition-all" title="Download CSV">
+                                        <i class="fas fa-file-download sm:mr-1"></i> <span class="hidden sm:inline">CSV</span>
+                                    </button>
+                                    <button onclick="closeYieldOverlay()" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-night-hover text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:rotate-90 text-sm transition-all">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="h-48 w-full mb-6 flex-shrink-0">
+                                <canvas id="chart-yield-funnel"></canvas>
+                            </div>
+                            <div class="flex-1 overflow-y-auto overflow-x-auto" id="yield-list-container"></div>
                         </div>
                     </div>
 
@@ -485,6 +537,78 @@
                     </div>
                 </section>
 
+                <section id="view-advanced" class="hidden space-y-6">
+                    <div class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-sm border dark:border-night-border card-transition">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-dark dark:text-white">Customer Journey Playground</h3>
+                                <p class="text-sm text-grey dark:text-gray-400">Compare massive batch uploads against real-time conversion trends.</p>
+                            </div>
+                            <button onclick="openModal('advancedUploadModal')" class="bg-black dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl font-bold hover:-translate-y-1 transition-all shadow-md flex items-center">
+                                <i class="fas fa-upload mr-2"></i>Analytics Batch Upload
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white dark:bg-night-card p-6 rounded-2xl border dark:border-night-border shadow-sm card-transition space-y-6 h-fit">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Main Pointer (The Batch)</label>
+                                <select id="bi-main-pointer" onchange="refreshAdvancedBI()" class="w-full bg-light dark:bg-night-hover p-3 rounded-xl border border-transparent dark:border-night-border font-bold text-sm text-dark dark:text-white cursor-pointer focus:ring-2 focus:ring-primary focus:outline-none transition-colors">
+                                    <option value="">Select a Batch Upload...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Compare Against (Sub Pointer)</label>
+                                <select id="bi-sub-pointer" onchange="refreshAdvancedBI()" class="w-full bg-light dark:bg-night-hover p-3 rounded-xl border border-transparent dark:border-night-border font-bold text-sm text-dark dark:text-white cursor-pointer focus:ring-2 focus:ring-primary focus:outline-none transition-colors">
+                                    <option value="completed">Status: Completed KYC</option>
+                                    <option value="submissions">Status: At least 1 File Submitted</option>
+                                    <option value="pip">Status: PIP / High Risk Identified</option>
+                                </select>
+                            </div>
+                            <div class="pt-4 border-t dark:border-night-border">
+                                <button onclick="exportAdvancedBI()" class="w-full bg-primary py-3 rounded-xl font-bold text-black shadow-md hover:-translate-y-1 transition-all flex justify-center items-center">
+                                    <i class="fas fa-file-csv mr-2"></i>Download Journey CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-2 bg-white dark:bg-night-card p-6 rounded-2xl border dark:border-night-border shadow-sm card-transition">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="font-bold text-dark dark:text-white">Journey Timeline Comparison</h3>
+                                <div class="flex gap-4">
+                                    <div class="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300"><div class="w-3 h-3 bg-gray-200 dark:bg-gray-600 rounded"></div> Batch Total</div>
+                                    <div class="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300"><div class="w-3 h-3 bg-primary rounded"></div> Success Rate</div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="chart-advanced-bi"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-night-card rounded-2xl border dark:border-night-border shadow-sm overflow-hidden card-transition">
+                        <div class="p-4 border-b dark:border-night-border flex justify-between items-center bg-gray-50 dark:bg-night-hover">
+                            <h3 class="font-bold text-sm text-dark dark:text-white">Batch Customer Journey List</h3>
+                            <span id="bi-list-count" class="text-xs bg-white dark:bg-zinc-800 px-3 py-1 rounded-full font-bold shadow-sm border dark:border-night-border text-dark dark:text-gray-300">0 Users</span>
+                        </div>
+                        <div class="max-h-[400px] overflow-y-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-gray-50 dark:bg-night-hover sticky top-0 z-10 shadow-sm">
+                                    <tr class="text-[10px] text-gray-500 uppercase tracking-wider">
+                                        <th class="p-3 font-semibold">Name</th>
+                                        <th class="p-3 font-semibold">Omang</th>
+                                        <th class="p-3 font-semibold">Status</th>
+                                        <th class="p-3 font-semibold">Conversion Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bi-table-body" class="text-sm divide-y divide-gray-50 dark:divide-night-border">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </main>
     </div>
@@ -533,6 +657,32 @@
                     <button onclick="closeModal('bulkModal')" class="px-5 py-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-night-hover transition-colors">Cancel</button>
                     <button onclick="addManualUser()" class="px-5 py-2 rounded-xl bg-primary text-black font-medium hover:bg-yellow-400 shadow-md hover:-translate-y-0.5 transition-all">Add User</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="advancedUploadModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-md p-4 transition-all duration-300">
+        <div class="bg-white dark:bg-night-card rounded-2xl shadow-2xl p-6 w-full max-w-md border dark:border-night-border card-transition transform transition-transform scale-95">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-xl text-dark dark:text-white">Analytics Batch Import</h3>
+                <button onclick="closeModal('advancedUploadModal')" class="text-gray-400 hover:text-black dark:hover:text-white hover:rotate-90 transition-all"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <p class="text-sm text-grey dark:text-gray-400 mb-6">Upload a CSV of Omang numbers. This creates a baseline for tracking conversion journeys without polluting standard analytics.</p>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Batch Name</label>
+                    <input type="text" id="bi-batch-name" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-primary focus:outline-none transition-colors" placeholder="e.g. Feb 32k Batch">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Upload CSV <span class="text-xs font-normal text-gray-500">(Header must be 'omang' or 'Omang')</span></label>
+                    <input type="file" id="bi-csv-file" accept=".csv" class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-yellow-700 hover:file:bg-primary/20 dark:file:bg-zinc-800 dark:file:text-primary transition-all cursor-pointer">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-night-border">
+                <button onclick="closeModal('advancedUploadModal')" class="px-5 py-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-night-hover transition-colors">Cancel</button>
+                <button onclick="processAdvancedBatch()" class="px-5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium hover:bg-gray-800 dark:hover:bg-gray-200 shadow-md hover:-translate-y-0.5 transition-all">Import Batch</button>
             </div>
         </div>
     </div>
@@ -591,7 +741,7 @@
                             <div class="flex items-center gap-4 w-full sm:w-auto">
                                 <div class="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm"><i class="fas fa-id-card text-teal-600"></i></div>
                                 <div class="flex-1 sm:flex-none">
-                                    <p class="text-sm font-medium text-dark dark:text-white">Omang ID (Mandatory)</p>
+                                    <p class="text-sm font-medium text-dark dark:text-white">Omang / Passport (Mandatory)</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400" id="status-omang">No file</p>
                                 </div>
                             </div>
@@ -702,9 +852,17 @@
         let allCustomers = [];
         let filteredCustomers = [];
         let charts = {};
+        
         let selectedPipStatusForDownload = null;
         let selectedDateForDownload = null;
         let selectedSubmissionDateForDownload = null;
+        
+        let currentYieldUsers = [];
+        let currentYieldBucket = "";
+
+        // Advanced BI Global State
+        let advancedBatches = JSON.parse(localStorage.getItem('letshego_advanced_batches')) || [];
+        let biChart = null;
 
         // --- UI/UX & MODAL LOGIC ---
         window.openModal = (id) => {
@@ -763,6 +921,9 @@
                 localStorage.setItem('theme', 'light');
             }
             updateCharts(); 
+            if(document.getElementById('view-advanced').classList.contains('hidden') === false) {
+                refreshAdvancedBI();
+            }
         };
 
         // Init Theme
@@ -823,6 +984,134 @@
             };
         }
 
+        function getBucket(dateStr, period) {
+            if(!dateStr) return null;
+            const d = new Date(dateStr);
+            if(isNaN(d)) return null;
+            
+            if (period === 'monthly') {
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`;
+            } else if (period === 'weekly') {
+                const day = d.getDay() || 7; 
+                d.setHours(-24 * (day - 1));
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} (Wk)`;
+            } else {
+                return dateStr.split('T')[0];
+            }
+        }
+
+        // Helper for CSV export
+        function downloadCSVHelper(filename, data) {
+            if (!data || data.length === 0) {
+                Swal.fire('Info', 'No data to export.', 'info');
+                return;
+            }
+            const csv = Papa.unparse(data);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        // Export Functions
+        window.downloadTrendsCSV = () => {
+            const dailyCountsTotal = {};
+            allCustomers.forEach(c => {
+                if(c.created_at) {
+                    const d = c.created_at.split('T')[0];
+                    dailyCountsTotal[d] = (dailyCountsTotal[d] || 0) + 1;
+                }
+            });
+            const sortedTotalDates = Object.keys(dailyCountsTotal).sort().slice(-7);
+            const exportData = sortedTotalDates.map(date => ({ Date: date, Onboarded_Count: dailyCountsTotal[date] }));
+            downloadCSVHelper('Onboarding_Trends_7_Days.csv', exportData);
+        };
+
+        window.downloadStatusCSV = () => {
+            const stats = updateStats();
+            const data = [
+                { Status: 'Pending', Count: stats.pending },
+                { Status: 'In Progress', Count: stats.total - stats.pending - stats.completed },
+                { Status: 'Completed', Count: stats.completed }
+            ];
+            downloadCSVHelper('Onboarding_Status_Distribution.csv', data);
+        };
+
+        window.downloadPipSummaryCSV = () => {
+            const pipCounts = {};
+            allCustomers.forEach(c => {
+                let status = c.display_pip_status || 'Not Set';
+                pipCounts[status] = (pipCounts[status] || 0) + 1;
+            });
+            const data = Object.keys(pipCounts).map(k => ({ PIP_Status: k, User_Count: pipCounts[k] }));
+            downloadCSVHelper('PIP_Summary_Analyses.csv', data);
+        };
+
+        window.downloadDailySummaryCSV = () => {
+            const dailyUserCounts = {};
+            const period = document.getElementById('daily-period-filter').value;
+            allCustomers.forEach(c => {
+                const baseDate = c.last_activity || c.created_at;
+                if(baseDate) {
+                    const bucket = getBucket(baseDate, period);
+                    if(bucket) {
+                        dailyUserCounts[bucket] = (dailyUserCounts[bucket] || 0) + 1;
+                    }
+                }
+            });
+            const data = Object.keys(dailyUserCounts).sort().map(d => ({ Period: d, Unique_Users_Active: dailyUserCounts[d] }));
+            downloadCSVHelper(`Activity_Summary_${period}.csv`, data);
+        };
+
+        window.downloadSubmissionSummaryCSV = () => {
+            const dailySubmissionCounts = {};
+            allCustomers.forEach(c => {
+                if(c.last_upload_date) {
+                    const dateKey = c.last_upload_date.split('T')[0];
+                    dailySubmissionCounts[dateKey] = (dailySubmissionCounts[dateKey] || 0) + 1;
+                }
+            });
+            const data = Object.keys(dailySubmissionCounts).sort().map(d => ({ Date: d, Total_Submissions: dailySubmissionCounts[d] }));
+            downloadCSVHelper('Daily_Submission_Summary.csv', data);
+        };
+
+        window.downloadDocumentYieldCSV = () => {
+            if(!charts.docYieldBar) return;
+            const labels = charts.docYieldBar.data.labels;
+            const datasets = charts.docYieldBar.data.datasets;
+            
+            let exportData = [];
+            for(let i=0; i<labels.length; i++) {
+                let row = { Period: labels[i] };
+                datasets.forEach(ds => {
+                    row[ds.label] = ds.data[i];
+                });
+                exportData.push(row);
+            }
+            downloadCSVHelper('File_Tracking_Timeline.csv', exportData);
+        };
+
+        window.downloadYieldList = () => {
+            if (!currentYieldUsers || currentYieldUsers.length === 0) return;
+            const data = currentYieldUsers.map(u => {
+                let files = [];
+                if(u.omang_file_url?.length>5) files.push('Omang');
+                if(u.utility_bill_url?.length>5) files.push('Utility');
+                if(u.confirmation_letter_url?.length>5) files.push('Confirm');
+                if(u.affidavit_url?.length>5) files.push('Affidavit');
+                if(u.payslip_url?.length>5) files.push('Payslip');
+
+                return {
+                    Name: u.full_name,
+                    Omang: u.omang,
+                    Furthest_Step: u.furthest,
+                    Files_Uploaded: files.join(', ')
+                };
+            });
+            downloadCSVHelper(`Yield_Funnel_${currentYieldBucket}.csv`, data);
+        };
+
         // 4. DATA LISTENER (REALTIME)
         function initDataListener() {
             const unsub = onSnapshot(collection(db, "customers"), (snapshot) => {
@@ -832,8 +1121,6 @@
                     const kyc = calculateFileCount(data);
                     
                     let displayPipStatus = data.pip_status || 'Not Set';
-
-                    // Use updated logic for last activity
                     const lastActivity = data.last_activity || data.last_upload_date || data.created_at || '1970-01-01T00:00:00.000Z';
 
                     allCustomers.push({
@@ -844,16 +1131,18 @@
                         fileCount: kyc.total,
                         isComplete: kyc.isComplete,
                         sortTime: new Date(lastActivity).getTime(),
-                        latestDate: lastActivity
+                        latestDate: lastActivity,
+                        last_action: data.last_action || 'Activity Recorded'
                     });
                 });
                 
-                // SORT BY LATEST ACTIVITY (Newest First)
                 allCustomers.sort((a, b) => b.sortTime - a.sortTime);
 
                 updateStats();
                 renderTable(); 
                 updateCharts();
+                updateBatchDropdown();
+                refreshAdvancedBI();
             });
         }
 
@@ -862,9 +1151,9 @@
             const btn = document.querySelector('button[onclick="refreshData()"] i');
             if(btn) btn.classList.add('fa-spin');
             
-            // Firebase snapshot is real-time, but rendering creates a visual refresh
             renderTable();
             updateCharts();
+            refreshAdvancedBI();
             
             setTimeout(() => {
                 if(btn) btn.classList.remove('fa-spin');
@@ -879,7 +1168,6 @@
             document.getElementById(`view-${page}`).classList.remove('hidden');
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-nav', 'bg-light', 'text-primary'));
             
-            // Reset active state styles
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('bg-light', 'text-primary');
                 btn.classList.remove('dark:bg-night-hover', 'dark:text-white'); 
@@ -888,8 +1176,17 @@
             const btn = document.getElementById(`nav-${page}`);
             btn.classList.add('active-nav', 'bg-light', 'text-primary'); 
             
-            const titles = { 'dashboard': 'Dashboard Overview', 'users': 'User Management', 'analytics': 'Analytics & Reports' };
+            const titles = { 
+                'dashboard': 'Dashboard Overview', 
+                'users': 'User Management', 
+                'analytics': 'Analytics & Reports',
+                'advanced': 'Advanced BI Playground'
+            };
             document.getElementById('page-title').innerText = titles[page];
+
+            if(page === 'advanced') {
+                setTimeout(refreshAdvancedBI, 100);
+            }
         };
 
         // 6. RENDER TABLE
@@ -932,14 +1229,23 @@
                 }
 
                 let vaultHTML = '<div class="flex flex-wrap">';
-                if (c.omang_file_url && c.omang_file_url.length > 5) vaultHTML += `<a href="${c.omang_file_url}" target="_blank" class="file-chip"><i class="fas fa-id-card"></i> Omang</a>`;
+                
+                let idLabel = 'Omang';
+                let idIcon = 'fa-id-card';
+                if (/^[a-zA-Z]/.test(c.omang)) {
+                    idLabel = 'Passport';
+                    idIcon = 'fa-passport';
+                }
+
+                if (c.omang_file_url && c.omang_file_url.length > 5) {
+                    vaultHTML += `<a href="${c.omang_file_url}" target="_blank" class="file-chip"><i class="fas ${idIcon}"></i> ${idLabel}</a>`;
+                }
                 if (c.payslip_url && c.payslip_url.length > 5) vaultHTML += `<a href="${c.payslip_url}" target="_blank" class="file-chip"><i class="fas fa-money-bill"></i> Slip</a>`;
                 if (c.utility_bill_url && c.utility_bill_url.length > 5) vaultHTML += `<a href="${c.utility_bill_url}" target="_blank" class="file-chip"><i class="fas fa-bolt"></i> Bill</a>`;
                 if (c.confirmation_letter_url && c.confirmation_letter_url.length > 5) vaultHTML += `<a href="${c.confirmation_letter_url}" target="_blank" class="file-chip"><i class="fas fa-envelope"></i> Letter</a>`;
                 if (c.affidavit_url && c.affidavit_url.length > 5) vaultHTML += `<a href="${c.affidavit_url}" target="_blank" class="file-chip"><i class="fas fa-gavel"></i> Oath</a>`;
                 vaultHTML += '</div>';
 
-                // --- UPDATED PIP / RISK DISPLAY ---
                 let pipBadge = '';
                 const pStatus = c.display_pip_status; 
 
@@ -948,7 +1254,6 @@
                 } else if (pStatus === 'None') {
                     pipBadge = `<span class="bg-green-100 dark:bg-green-900/40 text-success border border-green-200 dark:border-green-800 px-2 py-1 rounded text-[10px] font-bold shadow-sm"><i class="fas fa-shield-alt mr-1"></i>None</span>`;
                 } else {
-                    // All other specific official titles in the list are red
                     pipBadge = `<span class="bg-red-50 dark:bg-red-900/40 text-danger border border-red-100 dark:border-red-800 px-2 py-1 rounded text-[10px] font-bold shadow-sm"><i class="fas fa-exclamation-triangle mr-1"></i>${pStatus}</span>`;
                 }
 
@@ -988,13 +1293,9 @@
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = user.full_name || '';
             
-            // Populate PIP Status
             document.getElementById('edit-pip-status-select').value = user.pip_status || 'Not Set';
-            
-            // Populate Source of Wealth Dropdown
             document.getElementById('edit-source-wealth').value = user.source_of_wealth || 'Not Set';
 
-            // Set file statuses AND Delete Buttons
             setFileStatusWithDelete('status-omang', 'del-btn-omang', user.omang_file_url);
             setFileStatusWithDelete('status-payslip', 'del-btn-payslip', user.payslip_url);
             setFileStatusWithDelete('status-utility', 'del-btn-utility', user.utility_bill_url);
@@ -1030,10 +1331,12 @@
                 await uploadBytes(fileRef, file);
                 const url = await getDownloadURL(fileRef);
                 
+                const actionText = 'Uploaded ' + field.replace('_url', '').replace('_file', '').replace(/_/g, ' ');
                 await updateDoc(doc(db, "customers", id), { 
                     [field]: url,
                     last_upload_date: new Date().toISOString(),
-                    last_activity: new Date().toISOString() // Updates Activity for Sorting
+                    last_activity: new Date().toISOString(),
+                    last_action: actionText
                 });
                 statusEl.innerHTML = '<span class="text-green-600"><i class="fas fa-check"></i> Success</span>';
                 if(deleteBtnId) document.getElementById(deleteBtnId).classList.remove('hidden');
@@ -1043,7 +1346,6 @@
             }
         };
 
-        // --- DELETE FILE FEATURE ---
         window.deleteFile = async (field, statusId) => {
             const id = document.getElementById('edit-id').value;
             const result = await Swal.fire({
@@ -1060,13 +1362,13 @@
                 statusEl.innerHTML = '<span class="text-primary"><i class="fas fa-spinner fa-spin"></i> Deleting...</span>';
 
                 try {
-                    // We update the field to an empty string to "delete" it from the record
+                    const actionText = 'Deleted ' + field.replace('_url', '').replace('_file', '').replace(/_/g, ' ');
                     await updateDoc(doc(db, "customers", id), { 
                         [field]: "",
-                        last_activity: new Date().toISOString() // Updates Activity for Sorting
+                        last_activity: new Date().toISOString(),
+                        last_action: actionText
                     });
                     
-                    // Re-open/refresh modal state visually
                     window.editUser(id); 
                     
                 } catch (error) {
@@ -1087,7 +1389,8 @@
                     full_name: newName, 
                     pip_status: newStatus,
                     source_of_wealth: newWealth,
-                    last_activity: new Date().toISOString() 
+                    last_activity: new Date().toISOString(),
+                    last_action: 'Profile Updated'
                 });
                 closeModal('editModal');
                 Swal.fire({ title: 'Saved', icon: 'success', timer: 1000, showConfirmButton: false });
@@ -1097,7 +1400,6 @@
         };
 
         // 8. CSV & MANUAL IMPORT OPERATIONS
-        
         window.switchImportTab = (tab) => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
@@ -1108,7 +1410,6 @@
             document.getElementById(`content-${tab}`).classList.remove('hidden');
         };
 
-        // Updates filename on file selection
         window.updateFileName = () => {
              const input = document.getElementById('csv-file');
              const label = document.getElementById('file-label');
@@ -1131,7 +1432,6 @@
                     const batchPromises = [];
                     const duplicateIDs = [];
 
-                    // DUPLICATE CHECK
                     for (const row of rows) {
                         if (row.omang) {
                             const exists = allCustomers.some(c => c.omang === row.omang);
@@ -1151,10 +1451,9 @@
                         });
                         document.getElementById('csv-file').value = '';
                         document.getElementById('file-label').innerHTML = 'Click to upload or drag and drop';
-                        return; // Stop processing
+                        return; 
                     }
 
-                    // Proceed if no duplicates
                     let count = 0;
                     for (const row of rows) {
                         if (row.omang) {
@@ -1165,7 +1464,8 @@
                                 pip_status: "Not Set",    
                                 source_of_wealth: "Not Set",
                                 created_at: new Date().toISOString(),
-                                last_activity: new Date().toISOString() // Sets latest activity
+                                last_activity: new Date().toISOString(),
+                                last_action: 'Profile Created'
                             };
                             batchPromises.push(setDoc(userRef, userData, { merge: true }));
                             count++;
@@ -1186,7 +1486,6 @@
             });
         };
 
-        // MANUAL ADD USER LOGIC
         window.addManualUser = async () => {
             const name = document.getElementById('manual-name').value.trim();
             const omang = document.getElementById('manual-omang').value.trim();
@@ -1196,7 +1495,6 @@
                 return;
             }
 
-            // DUPLICATE CHECK
             const exists = allCustomers.some(c => c.omang === omang);
             if (exists) {
                 Swal.fire({
@@ -1216,7 +1514,8 @@
                     pip_status: "Not Set",    
                     source_of_wealth: "Not Set",
                     created_at: new Date().toISOString(),
-                    last_activity: new Date().toISOString(), // Sets latest activity
+                    last_activity: new Date().toISOString(), 
+                    last_action: 'Profile Created',
                     omang_file_url: "",
                     payslip_url: "",
                     utility_bill_url: "",
@@ -1226,7 +1525,6 @@
                 
                 await setDoc(userRef, userData);
                 
-                // Clear inputs
                 document.getElementById('manual-name').value = '';
                 document.getElementById('manual-omang').value = '';
                 
@@ -1247,7 +1545,7 @@
                 Files: c.fileCount, 
                 PIP_Status: c.display_pip_status,
                 Source_Of_Wealth: c.source_of_wealth || 'Not Set',
-                // Added File URLs columns
+                Last_Action: c.last_action,
                 Omang_URL: c.omang_file_url || '',
                 Payslip_URL: c.payslip_url || '',
                 Utility_Bill_URL: c.utility_bill_url || '',
@@ -1262,12 +1560,11 @@
             link.click();
         };
 
-        // 9. ANALYTICS & CHARTS
+        // 9. STANDARD ANALYTICS & CHARTS
         function updateStats() {
             const total = allCustomers.length;
             const pending = allCustomers.filter(c => c.fileCount === 0).length;
             const completed = allCustomers.filter(c => c.isComplete).length;
-            // Count any PIP status except Not Set and None
             const pipIssues = allCustomers.filter(c => c.display_pip_status && c.display_pip_status !== 'Not Set' && c.display_pip_status !== 'None').length;
 
             animateValue("stat-total", parseInt(document.getElementById("stat-total").innerText), total, 1000);
@@ -1278,7 +1575,6 @@
             return { total, pending, completed, pipIssues };
         }
 
-        // Helper to populate Month Dropdowns
         function populateMonthDropdown(selectId, dates) {
             const select = document.getElementById(selectId);
             const months = new Set();
@@ -1286,27 +1582,21 @@
                 if (d) {
                     try {
                         const date = new Date(d);
-                        // Store as YYYY-MM
                         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                         months.add(key);
                     } catch (e) {}
                 }
             });
 
-            // Convert Set to Array and Sort Descending
             const sortedMonths = Array.from(months).sort().reverse();
-            
-            // If empty, just return
             if (sortedMonths.length === 0) return;
 
-            // Preserve current selection if possible, else default to first (latest)
             const currentVal = select.value;
-            select.innerHTML = ''; // Clear existing
+            select.innerHTML = ''; 
 
             sortedMonths.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m;
-                // Format for display: "2023-10" -> "October 2023"
                 const [y, monthIdx] = m.split('-');
                 const dateObj = new Date(parseInt(y), parseInt(monthIdx) - 1, 1);
                 opt.textContent = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
@@ -1316,14 +1606,13 @@
             if (currentVal && sortedMonths.includes(currentVal)) {
                 select.value = currentVal;
             } else {
-                select.value = sortedMonths[0]; // Default to latest
+                select.value = sortedMonths[0]; 
             }
         }
 
         function updateCharts() {
             const stats = updateStats();
             
-            // Chart 1: Status Pie
             if(charts.statusPie) charts.statusPie.destroy();
             charts.statusPie = new Chart(document.getElementById('chart-status-pie'), {
                 type: 'doughnut',
@@ -1337,18 +1626,11 @@
                 options: { 
                     maintainAspectRatio: false, 
                     cutout: '70%',
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true,
-                        duration: 2000,
-                        easing: 'easeOutQuart'
-                    }
+                    animation: { animateScale: true, animateRotate: true, duration: 2000, easing: 'easeOutQuart' }
                 }
             });
 
-            // Chart 2: Dynamic PIP ANALYSES (Donut)
             const pipCounts = {};
-            
             allCustomers.forEach(c => {
                 let status = c.display_pip_status || 'Not Set';
                 pipCounts[status] = (pipCounts[status] || 0) + 1;
@@ -1357,18 +1639,17 @@
             const pipLabels = Object.keys(pipCounts);
             const pipData = Object.values(pipCounts);
             
-            // Generate standard risk colors
             const colorMap = {
                 'Not Set': '#E2E8F0',
                 'None': '#05CD99',
-                'President / Vice President': '#EE5D50',
-                'Cabinet Minister / Speaker / Deputy Speaker / Member of National Assembly': '#EE5D50',
-                'Senior Government Official / Judicial Officer': '#EE5D50',
-                'Kgosi (per Bogosi Act)': '#EE5D50',
-                'Senior Executive of Political Party': '#EE5D50',
-                'Senior Executive of Public Body': '#EE5D50',
-                'Senior Executive of Private Entity (Turnover ≥ P1M per annum or equivalent)': '#EE5D50',
-                'Senior Executive of International Organization in Botswana': '#EE5D50'
+                'President / Vice President': '#F87171',
+                'Cabinet Minister / Speaker / Deputy Speaker / Member of National Assembly': '#FBBF24',
+                'Senior Government Official / Judicial Officer': '#60A5FA',
+                'Kgosi (per Bogosi Act)': '#A78BFA',
+                'Senior Executive of Political Party': '#F472B6',
+                'Senior Executive of Public Body': '#34D399',
+                'Senior Executive of Private Entity (Turnover ≥ P1M per annum or equivalent)': '#FB923C',
+                'Senior Executive of International Organization in Botswana': '#2DD4BF'
             };
             const pipColors = pipLabels.map(l => colorMap[l] || '#A0AEC0'); 
 
@@ -1378,42 +1659,30 @@
                 data: {
                     labels: pipLabels,
                     datasets: [{
-                        data: pipData,
-                        backgroundColor: pipColors, 
-                        borderWidth: 0
+                        data: pipData, backgroundColor: pipColors, borderWidth: 0
                     }]
                 },
                 options: {
                     maintainAspectRatio: false, cutout: '50%',
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true,
-                        duration: 2000,
-                        delay: 300,
-                        easing: 'easeOutElastic'
-                    },
+                    animation: { animateScale: true, animateRotate: true, duration: 2000, delay: 300, easing: 'easeOutElastic' },
                     plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
                     onClick: (e, activeElements) => {
                         if (activeElements.length > 0) {
                             const index = activeElements[0].index;
-                            const key = pipLabels[index];
-                            handlePipClick(key);
+                            handlePipClick(pipLabels[index]);
                         }
                     }
                 }
             });
 
-            // ---- SCALABLE CHART UPDATES ----
-
-            // Populate Dropdowns First
-            populateMonthDropdown('daily-month-filter', allCustomers.map(c => c.created_at));
+            populateMonthDropdown('daily-month-filter', allCustomers.map(c => c.last_activity || c.created_at));
             populateMonthDropdown('submission-month-filter', allCustomers.map(c => c.last_upload_date));
+            populateMonthDropdown('yield-month-filter', allCustomers.map(c => c.last_upload_date || c.created_at));
 
-            // Render Scalable Bar Charts based on Dropdown Values
             window.updateDailyChart();
             window.updateSubmissionChart();
+            window.updateDocumentYieldChart();
 
-            // Mini Line Chart (Last 7 Days total)
             const dailyCountsTotal = {};
             allCustomers.forEach(c => {
                 if(c.created_at) {
@@ -1434,10 +1703,7 @@
                         labels: last7Days.length > 0 ? last7Days : ['No Data'],
                         datasets: [{
                             data: last7Counts.length > 0 ? last7Counts : [0],
-                            borderColor: '#FFD100',
-                            backgroundColor: 'rgba(255, 209, 0, 0.1)',
-                            fill: true,
-                            tension: 0.4
+                            borderColor: '#FFD100', backgroundColor: 'rgba(255, 209, 0, 0.1)', fill: true, tension: 0.4
                         }]
                     },
                     options: { 
@@ -1450,18 +1716,175 @@
             }
         }
 
-        // --- Update functions for scalable charts ---
-        window.updateDailyChart = () => {
-            const selectedMonth = document.getElementById('daily-month-filter').value; // YYYY-MM
-            if (!selectedMonth) return;
+        window.updateDocumentYieldChart = () => {
+            const period = document.getElementById('yield-period-filter').value;
+            const monthFilter = document.getElementById('yield-month-filter').value;
+            
+            const buckets = {};
+            
+            allCustomers.forEach(c => {
+                const baseDate = c.last_upload_date || c.created_at;
+                if(!baseDate) return;
+                
+                if(period === 'daily' && monthFilter && !baseDate.startsWith(monthFilter)) return;
+                
+                const bucket = getBucket(baseDate, period);
+                if(!bucket) return;
+                
+                if(!buckets[bucket]) {
+                    buckets[bucket] = { omang: 0, payslip: 0, utility: 0, confirm: 0, affidavit: 0, users: [] };
+                }
+                
+                let added = false;
+                if(c.omang_file_url?.length > 5) { buckets[bucket].omang++; added = true; }
+                if(c.payslip_url?.length > 5) { buckets[bucket].payslip++; added = true; }
+                if(c.utility_bill_url?.length > 5) { buckets[bucket].utility++; added = true; }
+                if(c.confirmation_letter_url?.length > 5) { buckets[bucket].confirm++; added = true; }
+                if(c.affidavit_url?.length > 5) { buckets[bucket].affidavit++; added = true; }
+                
+                if(added) buckets[bucket].users.push(c);
+            });
 
+            const sortedBuckets = Object.keys(buckets).sort();
+            
+            const dataOmang = sortedBuckets.map(b => buckets[b].omang);
+            const dataPayslip = sortedBuckets.map(b => buckets[b].payslip);
+            const dataUtility = sortedBuckets.map(b => buckets[b].utility);
+            const dataConfirm = sortedBuckets.map(b => buckets[b].confirm);
+            const dataAffidavit = sortedBuckets.map(b => buckets[b].affidavit);
+
+            if(charts.docYieldBar) charts.docYieldBar.destroy();
+            charts.docYieldBar = new Chart(document.getElementById('chart-document-yield'), {
+                type: 'bar',
+                data: {
+                    labels: sortedBuckets,
+                    datasets: [
+                        { label: 'Omang', data: dataOmang, backgroundColor: '#3b82f6', barPercentage: 0.8, categoryPercentage: 0.8 },
+                        { label: 'Payslip', data: dataPayslip, backgroundColor: '#10b981', barPercentage: 0.8, categoryPercentage: 0.8 },
+                        { label: 'Utility Bill', data: dataUtility, backgroundColor: '#f59e0b', barPercentage: 0.8, categoryPercentage: 0.8 },
+                        { label: 'Confirmation', data: dataConfirm, backgroundColor: '#8b5cf6', barPercentage: 0.8, categoryPercentage: 0.8 },
+                        { label: 'Affidavit', data: dataAffidavit, backgroundColor: '#ec4899', barPercentage: 0.8, categoryPercentage: 0.8 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { stacked: false },
+                        y: { stacked: false, beginAtZero: true, ticks: { precision: 0 } }
+                    },
+                    plugins: {
+                        legend: { display: true, position: 'bottom' }
+                    },
+                    onClick: (e, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const idx = activeElements[0].index;
+                            const bucketKey = sortedBuckets[idx];
+                            handleYieldClick(bucketKey, buckets[bucketKey].users);
+                        }
+                    }
+                }
+            });
+        };
+
+        function handleYieldClick(bucketKey, usersInBucket) {
+            currentYieldBucket = bucketKey;
+            
+            let furthestOmang = 0;
+            let furthestRes = 0;
+            let furthestIncome = 0;
+            
+            currentYieldUsers = usersInBucket.map(u => {
+                const hasOmang = u.omang_file_url?.length > 5;
+                const hasRes = (u.utility_bill_url?.length > 5) || (u.confirmation_letter_url?.length > 5) || (u.affidavit_url?.length > 5);
+                const hasIncome = u.payslip_url?.length > 5;
+                
+                let furthest = "No Files";
+                if (hasOmang && hasRes && hasIncome) { furthest = "Completed"; furthestIncome++; }
+                else if (hasOmang && hasRes) { furthest = "Proof of Res"; furthestRes++; }
+                else if (hasOmang) { furthest = "Omang Only"; furthestOmang++; }
+                else if (hasRes || hasIncome) { furthest = "Partial (No Omang)"; }
+                
+                return { ...u, furthest };
+            });
+
+            document.getElementById('yield-overlay-title').innerText = `Progress for ${bucketKey}`;
+            document.getElementById('yield-overlay-count').innerText = `${currentYieldUsers.length} Users Tracked`;
+            
+            if(charts.yieldFunnel) charts.yieldFunnel.destroy();
+            charts.yieldFunnel = new Chart(document.getElementById('chart-yield-funnel'), {
+                type: 'bar',
+                data: {
+                    labels: ['Omang Only', 'Reached Proof of Res', 'Completed (Income)'],
+                    datasets: [{
+                        label: 'Users at Furthest Step',
+                        data: [furthestOmang, furthestRes, furthestIncome],
+                        backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } }
+                }
+            });
+            
+            const container = document.getElementById('yield-list-container');
+            let html = `
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="bg-gray-50 dark:bg-night-hover border-b border-gray-100 dark:border-night-border sticky top-0">
+                        <tr>
+                            <th class="p-3 text-xs font-semibold text-gray-500">Name</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500">Omang</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500">Furthest Step</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500">Files Uploaded</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-night-border">
+            `;
+            currentYieldUsers.forEach(u => {
+                let files = [];
+                if(u.omang_file_url?.length>5) files.push('Omang');
+                if(u.utility_bill_url?.length>5) files.push('Utility');
+                if(u.confirmation_letter_url?.length>5) files.push('Confirm');
+                if(u.affidavit_url?.length>5) files.push('Affidavit');
+                if(u.payslip_url?.length>5) files.push('Payslip');
+                
+                let stepColor = u.furthest === 'Completed' ? 'text-green-500' : (u.furthest === 'Proof of Res' ? 'text-yellow-500' : 'text-blue-500');
+
+                html += `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                        <td class="p-3 text-sm font-medium text-dark dark:text-white">${u.full_name}</td>
+                        <td class="p-3 text-sm text-gray-500">${u.omang}</td>
+                        <td class="p-3 text-sm font-bold ${stepColor}">${u.furthest}</td>
+                        <td class="p-3 text-xs text-gray-400">${files.join(', ')}</td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            openModal('yield-chart-overlay');
+        }
+
+        window.closeYieldOverlay = () => closeModal('yield-chart-overlay');
+
+        window.updateDailyChart = () => {
+            const period = document.getElementById('daily-period-filter').value;
+            const monthFilter = document.getElementById('daily-month-filter').value; 
+            
             const dailyUserCounts = {};
             
-            // Filter by month
             allCustomers.forEach(c => {
-                if(c.created_at && c.created_at.startsWith(selectedMonth)) {
-                    const dateKey = c.created_at.split('T')[0]; 
-                    dailyUserCounts[dateKey] = (dailyUserCounts[dateKey] || 0) + 1;
+                const baseDate = c.last_activity || c.created_at;
+                if(!baseDate) return;
+
+                if(period === 'daily' && monthFilter && !baseDate.startsWith(monthFilter)) return;
+
+                const bucket = getBucket(baseDate, period);
+                if(bucket) {
+                    dailyUserCounts[bucket] = (dailyUserCounts[bucket] || 0) + 1;
                 }
             });
 
@@ -1474,7 +1897,7 @@
                 data: {
                     labels: sortedDates,
                     datasets: [{
-                        label: 'Customers Onboarded',
+                        label: 'Customers Active',
                         data: sortedCounts,
                         backgroundColor: '#2B3674',
                         borderRadius: 4,
@@ -1489,9 +1912,7 @@
                     plugins: { legend: { display: false } },
                     onClick: (e, activeElements) => {
                         if (activeElements.length > 0) {
-                            const index = activeElements[0].index;
-                            const dateKey = sortedDates[index];
-                            handleDailyClick(dateKey);
+                            handleDailyClick(sortedDates[activeElements[0].index]);
                         }
                     }
                 }
@@ -1499,12 +1920,11 @@
         };
 
         window.updateSubmissionChart = () => {
-            const selectedMonth = document.getElementById('submission-month-filter').value; // YYYY-MM
+            const selectedMonth = document.getElementById('submission-month-filter').value; 
             if (!selectedMonth) return;
 
             const dailySubmissionCounts = {};
             
-            // Filter by month
             allCustomers.forEach(c => {
                 if(c.last_upload_date && c.last_upload_date.startsWith(selectedMonth)) {
                     const dateKey = c.last_upload_date.split('T')[0];
@@ -1536,16 +1956,13 @@
                     plugins: { legend: { display: false } },
                     onClick: (e, activeElements) => {
                         if (activeElements.length > 0) {
-                            const index = activeElements[0].index;
-                            const dateKey = sortedSubDates[index];
-                            handleSubmissionClick(dateKey);
+                            handleSubmissionClick(sortedSubDates[activeElements[0].index]);
                         }
                     }
                 }
             });
         };
 
-        // --- NEW HELPER: Render Table inside Overlay ---
         function renderOverlayTable(data, containerId, useLatestDate = false) {
             const container = document.getElementById(containerId);
             if (data.length === 0) {
@@ -1553,7 +1970,6 @@
                 return;
             }
 
-            // Determine header label based on mode
             const dateHeader = useLatestDate === 'submission' ? 'Submission Date' : (useLatestDate ? 'Latest Activity' : 'Date Info');
 
             let html = `
@@ -1570,7 +1986,6 @@
             `;
 
             data.forEach(u => {
-                // FORMAT DATE AND TIME
                 let dateStr;
                 if (useLatestDate === 'submission') {
                     dateStr = u.last_upload_date;
@@ -1582,10 +1997,7 @@
                 if (dateStr) {
                     try {
                         const dateObj = new Date(dateStr);
-                        formattedDate = dateObj.toLocaleString('en-GB', { 
-                            dateStyle: 'medium', 
-                            timeStyle: 'short' 
-                        });
+                        formattedDate = dateObj.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
                     } catch(e) { formattedDate = dateStr; }
                 }
 
@@ -1609,7 +2021,6 @@
             container.innerHTML = html;
         }
 
-        // --- PIP INTERACTION HANDLERS ---
         function handlePipClick(key) {
             let matches = allCustomers.filter(c => c.display_pip_status === key);
             selectedPipStatusForDownload = key; 
@@ -1617,9 +2028,7 @@
             document.getElementById('pip-overlay-title').innerText = `${key} Users`;
             document.getElementById('pip-overlay-count').innerText = `${matches.length} Records Found`;
             
-            // Render with TRUE for useLatestDate
             renderOverlayTable(matches, 'pip-list-container', true); 
-            
             openModal('pip-chart-overlay');
         }
 
@@ -1630,10 +2039,7 @@
             const safeFilename = filenameLabel.replace(/[^a-z0-9]/gi, '_').toLowerCase();
             
             const csv = Papa.unparse(data.map(u => ({ 
-                Name: u.full_name, 
-                Omang: u.omang, 
-                PIP_Status: selectedPipStatusForDownload, 
-                Latest_Activity: u.latestDate || u.created_at
+                Name: u.full_name, Omang: u.omang, PIP_Status: selectedPipStatusForDownload, Latest_Activity: u.latestDate || u.created_at
             })));
             
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -1645,33 +2051,77 @@
 
         window.closePipOverlay = () => closeModal('pip-chart-overlay');
 
-        // --- DAILY INTERACTION HANDLERS ---
         function handleDailyClick(dateKey) {
-            const matches = allCustomers.filter(c => c.created_at && c.created_at.startsWith(dateKey));
+            const period = document.getElementById('daily-period-filter').value;
+            const matches = allCustomers.filter(c => {
+                const baseDate = c.last_activity || c.created_at;
+                if(!baseDate) return false;
+                return getBucket(baseDate, period) === dateKey;
+            });
             selectedDateForDownload = dateKey;
             
-            document.getElementById('daily-overlay-title').innerText = `Onboarding: ${dateKey}`;
-            document.getElementById('daily-overlay-count').innerText = `${matches.length} Users Onboarded`;
+            document.getElementById('daily-overlay-title').innerText = `Activity: ${dateKey}`;
+            document.getElementById('daily-overlay-count').innerText = `${matches.length} Unique Users Active`;
             
-            renderOverlayTable(matches, 'daily-list-container', false);
+            const container = document.getElementById('daily-list-container');
+            let html = `
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="bg-gray-50 dark:bg-night-hover border-b border-gray-100 dark:border-night-border sticky top-0">
+                        <tr>
+                            <th class="p-3 text-xs font-semibold text-gray-500">Name</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500">Omang</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500">Last Action</th>
+                            <th class="p-3 text-xs font-semibold text-gray-500">Date & Time</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-night-border">
+            `;
+            matches.forEach(u => {
+                const dateObj = new Date(u.last_activity || u.created_at);
+                const formattedDate = dateObj.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                html += `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                        <td class="p-3 text-sm font-medium text-dark dark:text-white">${u.full_name}</td>
+                        <td class="p-3 text-sm text-gray-500">${u.omang}</td>
+                        <td class="p-3 text-sm text-primary font-medium">${u.last_action}</td>
+                        <td class="p-3 text-xs text-gray-400 font-mono">${formattedDate}</td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
 
             openModal('daily-chart-overlay');
         }
 
         window.downloadDailyList = () => {
             if (!selectedDateForDownload) return;
-            const data = allCustomers.filter(c => c.created_at && c.created_at.startsWith(selectedDateForDownload));
-            const csv = Papa.unparse(data.map(u => ({ Name: u.full_name, Omang: u.omang, OnboardingDate: u.created_at })));
+            const period = document.getElementById('daily-period-filter').value;
+            const matches = allCustomers.filter(c => {
+                const baseDate = c.last_activity || c.created_at;
+                if(!baseDate) return false;
+                return getBucket(baseDate, period) === selectedDateForDownload;
+            });
+
+            const csv = Papa.unparse(matches.map(u => {
+                const dateObj = new Date(u.last_activity || u.created_at);
+                return {
+                    Name: u.full_name,
+                    Omang: u.omang,
+                    Last_Action: u.last_action,
+                    Date_Time: dateObj.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+                };
+            }));
+
             const blob = new Blob([csv], { type: 'text/csv' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `Onboarding_Activity_${selectedDateForDownload}.csv`;
+            link.download = `Customer_Activity_${selectedDateForDownload}.csv`;
             link.click();
         };
 
         window.closeDailyOverlay = () => closeModal('daily-chart-overlay');
 
-        // --- SUBMISSION HANDLERS ---
         function handleSubmissionClick(dateKey) {
             const matches = allCustomers.filter(c => c.last_upload_date && c.last_upload_date.startsWith(dateKey));
             selectedSubmissionDateForDownload = dateKey;
@@ -1680,7 +2130,6 @@
             document.getElementById('submission-overlay-count').innerText = `${matches.length} Users Uploaded`;
             
             renderOverlayTable(matches, 'submission-list-container', 'submission');
-
             openModal('submission-chart-overlay');
         }
 
@@ -1696,6 +2145,221 @@
         };
 
         window.closeSubmissionOverlay = () => closeModal('submission-chart-overlay');
+
+        // --- 10. ADVANCED BI PLAYGROUND LOGIC ---
+
+        window.processAdvancedBatch = () => {
+            const name = document.getElementById('bi-batch-name').value.trim();
+            const fileInput = document.getElementById('bi-csv-file');
+            const file = fileInput.files[0];
+            
+            if(!name || !file) {
+                Swal.fire('Error', 'Batch Name and CSV File are required', 'warning');
+                return;
+            }
+
+            const btn = document.querySelector('#advancedUploadModal button[onclick="processAdvancedBatch()"]');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            btn.disabled = true;
+
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: (results) => {
+                    const omangs = results.data.map(r => r.omang || r.Omang).filter(Boolean);
+                    
+                    if (omangs.length === 0) {
+                        Swal.fire('Error', 'No valid Omang numbers found in CSV. Check headers.', 'error');
+                        btn.innerHTML = originalText; btn.disabled = false;
+                        return;
+                    }
+
+                    const newBatch = {
+                        id: 'batch_' + Date.now(),
+                        name: name,
+                        total: omangs.length,
+                        omangs: omangs,
+                        date: new Date().toISOString()
+                    };
+                    
+                    advancedBatches.push(newBatch);
+                    localStorage.setItem('letshego_advanced_batches', JSON.stringify(advancedBatches));
+                    
+                    updateBatchDropdown();
+                    
+                    // Auto-select the new batch
+                    document.getElementById('bi-main-pointer').value = newBatch.id;
+                    refreshAdvancedBI();
+
+                    closeModal('advancedUploadModal');
+                    Swal.fire('Success', `Batch "${name}" created with ${omangs.length} users.`, 'success');
+                    
+                    // Reset form
+                    document.getElementById('bi-batch-name').value = '';
+                    fileInput.value = '';
+                    btn.innerHTML = originalText; btn.disabled = false;
+                }
+            });
+        };
+
+        function updateBatchDropdown() {
+            const select = document.getElementById('bi-main-pointer');
+            const currentVal = select.value;
+            
+            select.innerHTML = '<option value="">Select a Batch Upload...</option>';
+            advancedBatches.forEach(b => {
+                select.innerHTML += `<option value="${b.id}">${b.name} (${b.total} Users)</option>`;
+            });
+
+            if (currentVal && advancedBatches.some(b => b.id === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        window.refreshAdvancedBI = () => {
+            const batchId = document.getElementById('bi-main-pointer').value;
+            const subPointer = document.getElementById('bi-sub-pointer').value;
+            
+            const ctx = document.getElementById('chart-advanced-bi');
+            const tbody = document.getElementById('bi-table-body');
+            const countEl = document.getElementById('bi-list-count');
+
+            if(!batchId) {
+                if(biChart) biChart.destroy();
+                tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">Please select a batch to view journey.</td></tr>';
+                countEl.innerText = '0 Users';
+                return;
+            }
+
+            const batch = advancedBatches.find(b => b.id === batchId);
+            const batchOmangs = new Set(batch.omangs);
+
+            // Filter real-time customers that are in this batch
+            const batchCustomers = allCustomers.filter(c => batchOmangs.has(c.omang));
+            
+            // Map successes by date
+            const successesByDate = {};
+            batchCustomers.forEach(c => {
+                let isSuccess = false;
+                if(subPointer === 'completed') isSuccess = c.isComplete;
+                else if(subPointer === 'submissions') isSuccess = c.fileCount > 0;
+                else if(subPointer === 'pip') isSuccess = c.display_pip_status !== 'None' && c.display_pip_status !== 'Not Set';
+
+                if(isSuccess) {
+                    const date = (c.last_activity || c.created_at || new Date().toISOString()).split('T')[0];
+                    successesByDate[date] = (successesByDate[date] || 0) + 1;
+                }
+            });
+
+            // Group by date for chart (last 14 days)
+            const dates = Object.keys(successesByDate).sort().slice(-14);
+            
+            // If no successes yet, show today so graph isn't broken
+            if (dates.length === 0) dates.push(new Date().toISOString().split('T')[0]);
+
+            const successData = dates.map(d => successesByDate[d] || 0);
+            const totalData = dates.map(d => batch.total); // Denominator
+
+            // Render Chart
+            if(biChart) biChart.destroy();
+            biChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        { 
+                            label: 'Conversion Volume', 
+                            data: successData, 
+                            backgroundColor: '#FFD100', 
+                            borderRadius: 4,
+                            barPercentage: 0.6
+                        },
+                        { 
+                            label: 'Batch Volume', 
+                            data: totalData, 
+                            backgroundColor: document.documentElement.classList.contains('dark') ? '#3f3f46' : '#E2E8F0', 
+                            borderRadius: 4,
+                            barPercentage: 0.6
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    scales: { 
+                        y: { beginAtZero: true, grid: { display: false } }, 
+                        x: { grid: { display: false } } 
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Render Table
+            tbody.innerHTML = '';
+            if (batchCustomers.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">No users from this batch have interacted yet.</td></tr>';
+            } else {
+                batchCustomers.forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors border-b border-gray-50 dark:border-night-border";
+                    
+                    let statusHtml = '';
+                    if (c.isComplete) statusHtml = '<span class="text-success font-semibold text-xs"><i class="fas fa-check-circle mr-1"></i>Completed</span>';
+                    else if (c.fileCount > 0) statusHtml = '<span class="text-orange-500 font-semibold text-xs"><i class="fas fa-spinner fa-spin mr-1"></i>In Progress</span>';
+                    else statusHtml = '<span class="text-gray-500 font-semibold text-xs"><i class="fas fa-clock mr-1"></i>Pending</span>';
+
+                    let dateStr = 'N/A';
+                    if (c.last_activity) {
+                        try { dateStr = new Date(c.last_activity).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }); } 
+                        catch(e) {}
+                    }
+
+                    tr.innerHTML = `
+                        <td class="p-3 text-dark dark:text-white font-medium">${c.full_name || 'Unknown'}</td>
+                        <td class="p-3 text-gray-500 dark:text-gray-400 font-mono">${c.omang}</td>
+                        <td class="p-3">${statusHtml}</td>
+                        <td class="p-3 text-gray-400 dark:text-gray-500 text-xs">${dateStr}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            countEl.innerText = `${batchCustomers.length} Users active`;
+        };
+
+        window.exportAdvancedBI = () => {
+            const batchId = document.getElementById('bi-main-pointer').value;
+            if(!batchId) {
+                Swal.fire('Info', 'Select a batch first to export.', 'info');
+                return;
+            }
+            
+            const batch = advancedBatches.find(b => b.id === batchId);
+            const batchOmangs = new Set(batch.omangs);
+            
+            const dataToExport = allCustomers.filter(c => batchOmangs.has(c.omang)).map(c => ({
+                Batch_Name: batch.name, 
+                Customer_Name: c.full_name, 
+                Omang: c.omang, 
+                Status: c.isComplete ? 'Completed' : (c.fileCount > 0 ? 'Partial' : 'Pending'), 
+                Files_Submitted: c.fileCount,
+                PIP_Risk: c.display_pip_status,
+                Last_Interaction: c.last_activity
+            }));
+
+            if (dataToExport.length === 0) {
+                Swal.fire('Info', 'No active users to export for this batch yet.', 'info');
+                return;
+            }
+
+            const csv = Papa.unparse(dataToExport);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Journey_Report_${batch.name.replace(/\s+/g, '_')}.csv`;
+            link.click();
+        };
 
         // Utilities
         window.getInitials = (name) => {
@@ -1739,6 +2403,9 @@
         window.uploadFile = uploadFile;
         window.saveUserChanges = saveUserChanges;
         
+        window.downloadYieldList = downloadYieldList;
+        window.closeYieldOverlay = closeYieldOverlay;
+
         window.downloadPipList = downloadPipList;
         window.closePipOverlay = closePipOverlay;
         
@@ -1753,9 +2420,20 @@
         window.deleteFile = deleteFile;
         window.updateFileName = updateFileName;
         
-        // Expose Scalable Chart Functions
         window.updateDailyChart = updateDailyChart;
         window.updateSubmissionChart = updateSubmissionChart;
+        window.updateDocumentYieldChart = updateDocumentYieldChart;
+
+        window.downloadTrendsCSV = downloadTrendsCSV;
+        window.downloadStatusCSV = downloadStatusCSV;
+        window.downloadPipSummaryCSV = downloadPipSummaryCSV;
+        window.downloadDailySummaryCSV = downloadDailySummaryCSV;
+        window.downloadSubmissionSummaryCSV = downloadSubmissionSummaryCSV;
+        window.downloadDocumentYieldCSV = downloadDocumentYieldCSV;
+        
+        window.processAdvancedBatch = processAdvancedBatch;
+        window.refreshAdvancedBI = refreshAdvancedBI;
+        window.exportAdvancedBI = exportAdvancedBI;
     </script>
 </body>
 </html>
