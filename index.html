@@ -365,11 +365,194 @@
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
+        /* ── Action Split-Button Dropdown ───────────────────── */
+        #action-split-btn {
+            display: flex;
+            align-items: stretch;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(255, 209, 0, 0.25);
+            border: 1.5px solid rgba(255, 209, 0, 0.6);
+            background: #FFD100;
+            flex-shrink: 0;
+        }
+
+        #action-exec-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+
+        #action-exec-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        #action-split-divider {
+            width: 1px;
+            background: rgba(0, 0, 0, 0.18);
+            margin: 5px 0;
+        }
+
+        #action-chevron-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 11px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: #000;
+            transition: background 0.15s;
+        }
+
+        #action-chevron-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        #action-chevron-btn i {
+            transition: transform 0.2s ease;
+            font-size: 11px;
+        }
+
+        /* The floating menu is portalled to body — always on top */
+        #action-dd-portal {
+            position: fixed;
+            z-index: 99999;
+            width: 280px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.10);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: #fff;
+            display: none;
+            animation: ddFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .dark #action-dd-portal,
+        #action-dd-portal.dark-mode {
+            background: #1a1a1a;
+            border-color: #383838;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes ddFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .dd-opt {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 10px;
+            border: 1.5px solid transparent;
+            transition: all 0.15s ease;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            color: #1a1a1a;
+        }
+
+        .dark #action-dd-portal .dd-opt,
+        #action-dd-portal.dark-mode .dd-opt {
+            color: #e4e4e7;
+        }
+
+        .dd-opt:hover {
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .dark #action-dd-portal .dd-opt:hover,
+        #action-dd-portal.dark-mode .dd-opt:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .dd-opt.selected {
+            border-color: rgba(255, 209, 0, 0.5) !important;
+            background: rgba(255, 209, 0, 0.1) !important;
+        }
+
+        .dark #action-dd-portal .dd-opt.selected,
+        #action-dd-portal.dark-mode .dd-opt.selected {
+            background: rgba(255, 209, 0, 0.15) !important;
+        }
+
+        .dd-opt-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+
+        .dd-opt-title {
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .dd-opt-sub {
+            font-size: 10px;
+            color: #888;
+            margin-top: 1px;
+        }
+
+        .dark #action-dd-portal .dd-opt-sub,
+        #action-dd-portal.dark-mode .dd-opt-sub {
+            color: #666;
+        }
+
+        .dd-opt .dd-tick {
+            margin-left: auto;
+            font-size: 11px;
+            color: #FFD100;
+            opacity: 0;
+            flex-shrink: 0;
+        }
+
+        .dd-opt.selected .dd-tick {
+            opacity: 1;
+        }
+
+        .dd-sep {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.06);
+            margin: 4px 12px;
+        }
+
+        .dark #action-dd-portal .dd-sep,
+        #action-dd-portal.dark-mode .dd-sep {
+            background: rgba(255, 255, 255, 0.07);
+        }
     </style>
 </head>
 
-<body class="bg-light dark:bg-night-bg text-dark dark:text-night-text overflow-hidden h-screen flex flex-col">
-    <div id="login-overlay" class="fixed inset-0 z-[60] flex transition-opacity duration-500 bg-white dark:bg-night-bg">
+<body class="bg-light dark:bg-night-bg text-gray-800 dark:text-gray-200">
+    <div id="login-overlay"
+        class="flex min-h-screen w-full fixed inset-0 z-50 bg-white dark:bg-night-bg transition-opacity duration-500">
         <!-- Left Pane: Animated Background -->
         <div
             class="hidden lg:flex w-1/2 relative overflow-hidden bg-gradient-to-br from-dark via-[#3b82f6] to-primary animate-gradient-xy flex-col justify-center p-12">
@@ -520,7 +703,8 @@
                 <div
                     class="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-night-hover rounded-xl card-transition">
                     <span class="text-sm font-medium text-gray-600 dark:text-gray-300"><i
-                            class="fas fa-moon mr-2"></i>Night Mode</span>
+                            class="fas fa-moon mr-2"></i>Night
+                        Mode</span>
                     <label
                         class="relative inline-flex items-center cursor-pointer hover:scale-105 transition-transform">
                         <input type="checkbox" id="theme-toggle" class="sr-only peer" onchange="toggleTheme()"
@@ -618,7 +802,8 @@
                                     class="text-grey text-xs md:text-sm font-medium mb-1 group-hover:text-success transition-colors">
                                     Completed KYC</p>
                                 <h3 class="text-2xl md:text-3xl font-bold text-dark dark:text-white"
-                                    id="stat-completed">0</h3>
+                                    id="stat-completed">0
+                                </h3>
                             </div>
                             <div
                                 class="h-10 w-10 md:h-12 md:w-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-success text-lg md:text-xl transform group-hover:scale-110 transition-transform">
@@ -632,7 +817,8 @@
                                     class="text-grey text-xs md:text-sm font-medium mb-1 group-hover:text-orange-500 transition-colors">
                                     Incomplete KYC</p>
                                 <h3 class="text-2xl md:text-3xl font-bold text-dark dark:text-white"
-                                    id="stat-incomplete">0</h3>
+                                    id="stat-incomplete">0
+                                </h3>
                             </div>
                             <div
                                 class="h-10 w-10 md:h-12 md:w-12 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500 text-lg md:text-xl transform group-hover:scale-110 transition-transform">
@@ -765,30 +951,28 @@
                                 class="flex-1 md:flex-none w-10 md:w-10 bg-white dark:bg-night-input dark:text-night-text dark:border-night-border border border-gray-200 text-dark px-0 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-night-hover transition-all shadow-sm justify-center flex items-center group">
                                 <i class="fas fa-sync-alt group-hover:rotate-180 transition-transform duration-500"></i>
                             </button>
-                            <button onclick="openModal('bulkModal')"
-                                class="flex-1 md:flex-none w-full md:w-auto bg-primary text-black px-4 py-2 rounded-xl text-sm font-medium hover:bg-yellow-400 transition-all hover:-translate-y-0.5 shadow-sm justify-center flex items-center">
-                                <i class="fas fa-plus mr-2"></i> Import / Add
-                            </button>
-                            <div id="super-admin-tools" class="hidden flex-1 md:flex-none flex items-center gap-2">
-                                <button id="btn-select-delete" onclick="toggleSelectionDeleteMode()"
-                                    class="w-full md:w-auto bg-gray-200 dark:bg-night-input text-gray-700 dark:text-night-text px-3 py-2 rounded-xl text-xs font-medium hover:bg-gray-300 dark:hover:bg-night-hover transition-all flex items-center justify-center border border-gray-300 dark:border-night-border"
-                                    title="Enable Selection Mode">
-                                    <i class="fas fa-check-square mr-1"></i> Select
-                                </button>
-                                <button id="btn-delete-selected" onclick="executeDeleteSelected()"
-                                    class="hidden w-full md:w-auto bg-red-100 text-red-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-red-200 transition-all flex items-center justify-center border border-red-200"
-                                    title="Delete Chosen Rows">
-                                    <i class="fas fa-trash-alt mr-1"></i> Delete (<span id="delete-count">0</span>)
-                                </button>
+
+                            <!-- ── Action Split-Button ─────────────────────────── -->
+                            <div id="action-dropdown-wrapper">
+                                <div id="action-split-btn" role="group" aria-label="Action options">
+                                    <!-- Left: execute current action -->
+                                    <button id="action-exec-btn" onclick="executeCurrentDropdownAction()"
+                                        title="Run selected action">
+                                        <i class="fas fa-file-excel" id="action-dropdown-icon"></i>
+                                        <span id="action-dropdown-label">Export Excel</span>
+                                    </button>
+                                    <!-- Divider -->
+                                    <div id="action-split-divider"></div>
+                                    <!-- Right: open picker -->
+                                    <button id="action-chevron-btn" onclick="toggleActionDropdown()"
+                                        title="Choose action" aria-haspopup="listbox">
+                                        <i class="fas fa-chevron-down" id="action-dropdown-chevron"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <button onclick="exportToCSV()"
-                                class="flex-1 md:flex-none w-full md:w-auto bg-white dark:bg-night-input dark:text-night-text dark:border-night-border border border-gray-200 text-dark px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-night-hover transition-all hover:-translate-y-0.5 shadow-sm justify-center flex items-center">
-                                <i class="fas fa-file-download mr-2"></i> Export Excel
-                            </button>
-                            <button onclick="downloadAllCustomersDocs()" id="btn-download-all-files" title="Download all submitted documents from all customers as a single ZIP"
-                                class="flex-1 md:flex-none w-full md:w-auto bg-primary text-black px-4 py-2 rounded-xl text-sm font-bold hover:bg-yellow-400 transition-all hover:-translate-y-0.5 shadow-sm justify-center flex items-center gap-2">
-                                <i class="fas fa-cloud-download-alt"></i> <span>Download All Files</span>
-                            </button>
+                            <!-- Hidden legacy id for super-admin button reference -->
+                            <button id="btn-select-delete" class="hidden" onclick="toggleSelectionDeleteMode()"
+                                title="Toggle selection mode" aria-label="Toggle selection mode"></button>
                         </div>
                     </div>
                     <div
@@ -1045,7 +1229,8 @@
                                 class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
                                 <div>
                                     <h4 class="font-bold text-lg mb-1 text-dark dark:text-white"
-                                        id="yield-overlay-title">Progression Funnel</h4>
+                                        id="yield-overlay-title">
+                                        Progression Funnel</h4>
                                     <p class="text-sm text-gray-500 dark:text-gray-400" id="yield-overlay-count">0 Users
                                     </p>
                                 </div>
@@ -1107,7 +1292,8 @@
                                 class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
                                 <div>
                                     <h4 class="font-bold text-lg mb-1 text-dark dark:text-white"
-                                        id="daily-overlay-title">Activity Details</h4>
+                                        id="daily-overlay-title">
+                                        Activity Details</h4>
                                     <p class="text-sm text-gray-500 dark:text-gray-400" id="daily-overlay-count">0 Users
                                     </p>
                                 </div>
@@ -1195,7 +1381,8 @@
                                 class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
                                 <div>
                                     <h4 class="font-bold text-lg mb-1 text-dark dark:text-white"
-                                        id="risk-overlay-title">Risk Rating Details</h4>
+                                        id="risk-overlay-title">
+                                        Risk Rating Details</h4>
                                     <p class="text-sm text-gray-500 dark:text-gray-400" id="risk-overlay-count">0 Users
                                     </p>
                                 </div>
@@ -1434,14 +1621,20 @@
                             class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all duration-300 opacity-0">
                             <div
                                 class="bg-white dark:bg-night-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden border dark:border-night-border card-transition transform transition-transform scale-95 flex flex-col">
-                                <div class="flex justify-between items-center px-6 py-4 border-b dark:border-night-border">
+                                <div
+                                    class="flex justify-between items-center px-6 py-4 border-b dark:border-night-border">
                                     <div class="flex items-center gap-3">
-                                        <div class="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                        <div
+                                            class="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                             <i class="fas fa-address-card text-sm"></i>
                                         </div>
                                         <div>
-                                            <h3 id="loan-journey-title" class="font-bold text-base text-dark dark:text-white leading-tight">User Profile</h3>
-                                            <p id="user-profile-subtitle" class="text-[11px] text-grey dark:text-gray-400">Chatbot Session Analysis</p>
+                                            <h3 id="loan-journey-title"
+                                                class="font-bold text-base text-dark dark:text-white leading-tight">User
+                                                Profile</h3>
+                                            <p id="user-profile-subtitle"
+                                                class="text-[11px] text-grey dark:text-gray-400">
+                                                Chatbot Session Analysis</p>
                                         </div>
                                     </div>
                                     <button onclick="closeModal('loan-journey-modal')" title="Close"
@@ -2114,7 +2307,9 @@
                         statusEl.innerHTML = '<i class="fas fa-gem mr-1"></i>SUPER ADMIN';
                         statusEl.className = 'text-xs text-amber-500 font-medium';
                         document.getElementById('super-admin-tools').classList.remove('hidden');
-                        document.getElementById('nav-btn-delete-all').classList.remove('hidden');
+                        const navBtnDeleteAll = document.getElementById('nav-btn-delete-all');
+                        if (navBtnDeleteAll) navBtnDeleteAll.classList.remove('hidden');
+                        if (window._showSuperAdminPortalTools) window._showSuperAdminPortalTools();
                     }
                 }, 800);
             } else {
@@ -2262,6 +2457,62 @@
             });
             downloadExcelHelper(`Yield_Funnel_${currentYieldBucket}.xlsx`, data);
         };
+        // Helper: fetch a file blob robustly (direct → CORS proxy → XHR fallback)
+        async function fetchFileBlob(url) {
+            // 1. Try direct fetch
+            try {
+                const response = await fetch(url, { mode: 'cors' });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    if (blob.size > 0) return blob;
+                }
+            } catch (_) { /* try next */ }
+
+            // 2. Try CORS proxy
+            try {
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                const response = await fetch(proxyUrl);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    if (blob.size > 0) return blob;
+                }
+            } catch (_) { /* try next */ }
+
+            // 3. XMLHttpRequest fallback (handles some environments that block fetch CORS)
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.responseType = 'blob';
+                xhr.onload = () => {
+                    if (xhr.status === 200 && xhr.response && xhr.response.size > 0) {
+                        resolve(xhr.response);
+                    } else {
+                        reject(new Error(`XHR failed with status ${xhr.status}`));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('XHR network error'));
+                xhr.send();
+            });
+        }
+
+        // Helper: detect extension from blob type OR url
+        function detectExt(blob, url) {
+            if (blob.type === 'application/pdf' || blob.type === 'application/octet-stream') return '.pdf';
+            if (blob.type === 'image/jpeg') return '.jpg';
+            if (blob.type === 'image/png') return '.png';
+            if (blob.type === 'image/gif') return '.gif';
+            if (blob.type === 'image/webp') return '.webp';
+            // Fallback: sniff from URL
+            const urlLower = (url || '').toLowerCase().split('?')[0];
+            if (urlLower.endsWith('.pdf')) return '.pdf';
+            if (urlLower.endsWith('.jpg') || urlLower.endsWith('.jpeg')) return '.jpg';
+            if (urlLower.endsWith('.png')) return '.png';
+            // Firebase Storage paths often encode the extension in the path segment
+            const match = urlLower.match(/\.(pdf|jpg|jpeg|png|gif|webp|doc|docx)[&%]/);
+            if (match) return '.' + match[1].replace('jpeg', 'jpg');
+            return '.pdf'; // default assumption for KYC docs
+        }
+
         window.downloadUserDocs = async (id) => {
             const user = allCustomers.find(u => u.id === id);
             if (!user) return;
@@ -2281,45 +2532,33 @@
 
             Swal.fire({
                 title: 'Preparing ZIP Archive',
-                text: `Gathering and zipping ${docsToDownload.length} document(s). Please wait...`,
+                html: `Fetching <b>${docsToDownload.length}</b> document(s) for <b>${user.full_name || id}</b>. Please wait…`,
                 allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+                didOpen: () => Swal.showLoading()
             });
 
             try {
                 const zip = new JSZip();
+                let failed = 0;
 
-                await Promise.all(docsToDownload.map(async (doc) => {
-                    let response;
+                for (const docItem of docsToDownload) {
                     try {
-                        // Attempt direct fetch
-                        response = await fetch(doc.url);
-                        if (!response.ok) throw new Error("Direct fetch failed");
-                    } catch (err) {
-                        // If CORS blocks the request, fallback to a public CORS proxy
-                        console.warn(`Direct fetch failed for ${doc.prefix}. Trying CORS proxy...`);
-                        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(doc.url);
-                        response = await fetch(proxyUrl);
-                        if (!response.ok) throw new Error("Proxy fetch failed");
+                        const blob = await fetchFileBlob(docItem.url);
+                        const ext = detectExt(blob, docItem.url);
+                        zip.file(`${docItem.prefix}${ext}`, blob);
+                    } catch (e) {
+                        console.warn(`Could not fetch ${docItem.prefix}:`, e);
+                        failed++;
                     }
+                }
 
-                    const blob = await response.blob();
+                if (zip.files && Object.keys(zip.files).length === 0) {
+                    throw new Error('All files failed to download');
+                }
 
-                    let ext = '';
-                    if (blob.type === 'image/jpeg') ext = '.jpg';
-                    else if (blob.type === 'image/png') ext = '.png';
-                    else if (blob.type === 'application/pdf') ext = '.pdf';
-
-                    const filename = `${doc.prefix}${ext}`;
-                    zip.file(filename, blob);
-                }));
-
-                const content = await zip.generateAsync({ type: "blob" });
-
+                const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
                 const downloadUrl = URL.createObjectURL(content);
-                const a = document.createElement("a");
+                const a = document.createElement('a');
                 a.href = downloadUrl;
                 const safeUserName = (user.full_name || 'User').replace(/[^a-z0-9]/gi, '_').toLowerCase();
                 a.download = `Letshego_${safeUserName}_Documents.zip`;
@@ -2329,57 +2568,60 @@
                 URL.revokeObjectURL(downloadUrl);
 
                 Swal.close();
-                Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, icon: 'success', title: 'ZIP downloaded successfully!' });
+                if (failed > 0) {
+                    Swal.fire({ icon: 'warning', title: 'Partial Download', html: `ZIP created with <b>${docsToDownload.length - failed}</b> file(s). <b>${failed}</b> could not be fetched.` });
+                } else {
+                    Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, icon: 'success', title: 'ZIP downloaded successfully!' });
+                }
             } catch (error) {
-                console.error("ZIP creation failed completely:", error);
-
+                console.error('ZIP creation failed:', error);
                 Swal.fire({
-                    title: 'ZIP Error',
-                    text: 'Unable to bundle files due to network restrictions. Opening files sequentially.',
+                    title: 'Download Error',
+                    html: 'Could not bundle files. Opening them individually in new tabs instead.',
                     icon: 'warning'
-                });
-
-                // Final fallback if even the proxy fails 
-                docsToDownload.forEach((doc, index) => {
-                    setTimeout(() => {
-                        const a = document.createElement('a');
-                        a.href = doc.url;
-                        a.target = '_blank';
-                        a.download = doc.prefix;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    }, index * 1000);
+                }).then(() => {
+                    docsToDownload.forEach((docItem, index) => {
+                        setTimeout(() => {
+                            const a = document.createElement('a');
+                            a.href = docItem.url;
+                            a.target = '_blank';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        }, index * 800);
+                    });
                 });
             }
         };
 
-        /* ── Download ALL customers' documents as one ZIP ─────────────────── */
+        /* ── Download ALL (filtered) customers' documents as one ZIP ──────── */
         window.downloadAllCustomersDocs = async () => {
-            // Collect every customer that has at least one document
-            const customersWithDocs = allCustomers.map(c => ({
+            // Use FILTERED list so the download respects current table filters.
+            // Also skip any customer that has zero uploaded files.
+            const sourceList = filteredCustomers.length > 0 ? filteredCustomers : allCustomers;
+            const customersWithDocs = sourceList.map(c => ({
                 id: c.id,
                 name: (c.full_name || c.id || 'Unknown').replace(/[^a-z0-9 _-]/gi, '_'),
                 docs: [
-                    { url: c.omang_file_url,           prefix: 'Omang' },
-                    { url: c.payslip_url,              prefix: 'Payslip' },
-                    { url: c.utility_bill_url,         prefix: 'Utility_Bill' },
-                    { url: c.confirmation_letter_url,  prefix: 'Confirmation_Letter' },
-                    { url: c.affidavit_url,            prefix: 'Affidavit' }
+                    { url: c.omang_file_url, prefix: 'Omang' },
+                    { url: c.payslip_url, prefix: 'Payslip' },
+                    { url: c.utility_bill_url, prefix: 'Utility_Bill' },
+                    { url: c.confirmation_letter_url, prefix: 'Confirmation_Letter' },
+                    { url: c.affidavit_url, prefix: 'Affidavit' }
                 ].filter(d => d.url && d.url.length > 5)
-            })).filter(c => c.docs.length > 0);
+            })).filter(c => c.docs.length > 0); // ← only customers with at least 1 file
 
             if (customersWithDocs.length === 0) {
-                Swal.fire('No Documents', 'No documents have been submitted yet.', 'info');
+                Swal.fire('No Documents', 'No documents found in the current filtered list.', 'info');
                 return;
             }
 
             const totalFiles = customersWithDocs.reduce((s, c) => s + c.docs.length, 0);
+            const isFiltered = filteredCustomers.length > 0 && filteredCustomers.length !== allCustomers.length;
 
-            // Ask for confirmation before kicking off a potentially large download
             const confirm = await Swal.fire({
-                title: 'Download All Files?',
-                html: `This will bundle <b>${totalFiles} file(s)</b> from <b>${customersWithDocs.length} customer(s)</b> into a single ZIP archive. This may take a while.`,
+                title: 'Download Files',
+                html: `This will bundle <b>${totalFiles} file(s)</b> from <b>${customersWithDocs.length} customer(s)</b>${isFiltered ? ' <span style="color:#FFD100">(current filter)</span>' : ''} into one ZIP archive.<br><small style="color:#888">Only customers with uploaded files are included.</small>`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#FFD100',
@@ -2410,35 +2652,20 @@
                 const zip = new JSZip();
                 let failed = 0;
 
-                // Process each customer sequentially to avoid flooding the network
                 for (const customer of customersWithDocs) {
-                    const folderName = customer.name.trim() || customer.id;
+                    const folderName = (customer.name.trim() || customer.id).substring(0, 60);
                     const folder = zip.folder(folderName);
 
-                    for (const doc of customer.docs) {
+                    for (const docItem of customer.docs) {
                         processed++;
-                        updateProgress(processed, totalFiles, `Fetching ${doc.prefix} for ${customer.name.trim()}…`);
+                        updateProgress(processed, totalFiles, `Fetching ${docItem.prefix} for ${customer.name.trim()}…`);
 
                         try {
-                            let response;
-                            try {
-                                response = await fetch(doc.url);
-                                if (!response.ok) throw new Error('direct failed');
-                            } catch {
-                                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(doc.url);
-                                response = await fetch(proxyUrl);
-                                if (!response.ok) throw new Error('proxy failed');
-                            }
-
-                            const blob = await response.blob();
-                            let ext = '';
-                            if (blob.type === 'image/jpeg') ext = '.jpg';
-                            else if (blob.type === 'image/png') ext = '.png';
-                            else if (blob.type === 'application/pdf') ext = '.pdf';
-
-                            folder.file(`${doc.prefix}${ext}`, blob);
+                            const blob = await fetchFileBlob(docItem.url);
+                            const ext = detectExt(blob, docItem.url);
+                            folder.file(`${docItem.prefix}${ext}`, blob);
                         } catch (fetchErr) {
-                            console.warn(`Could not fetch ${doc.prefix} for ${customer.name}:`, fetchErr);
+                            console.warn(`Could not fetch ${docItem.prefix} for ${customer.name}:`, fetchErr);
                             failed++;
                         }
                     }
@@ -2459,7 +2686,7 @@
                 const downloadUrl = URL.createObjectURL(content);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = `Letshego_All_Customer_Documents_${now}.zip`;
+                a.download = `Letshego_KYC_Documents_${now}.zip`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -2470,7 +2697,7 @@
                     icon: failed > 0 ? 'warning' : 'success',
                     title: 'Download Complete',
                     html: failed > 0
-                        ? `ZIP created with <b>${totalFiles - failed}</b> file(s). <b>${failed}</b> file(s) could not be fetched due to network restrictions.`
+                        ? `ZIP created with <b>${totalFiles - failed}</b> file(s). <b>${failed}</b> could not be fetched (network/CORS restriction).`
                         : `All <b>${totalFiles}</b> document(s) from <b>${customersWithDocs.length}</b> customer(s) downloaded successfully!`,
                     toast: failed === 0,
                     position: failed === 0 ? 'top-end' : 'center',
@@ -3028,20 +3255,226 @@
         window.isSelectDeleteMode = false;
         window.selectedUsersForDeletion = new Set();
 
+        /* ── Build the portal dropdown menu (injected into <body>) ────────── */
+        (function buildPortal() {
+            const isDark = () => document.documentElement.classList.contains('dark');
+
+            const portal = document.createElement('div');
+            portal.id = 'action-dd-portal';
+            portal.innerHTML = `
+                <div style="padding:8px;">
+                    <button class="dd-opt selected" id="ddp-export-excel" onclick="selectDropdownAction('export-excel')">
+                        <span class="dd-opt-icon" style="background:rgba(255,209,0,0.15);color:#b38a00;">
+                            <i class="fas fa-file-excel"></i>
+                        </span>
+                        <div>
+                            <div class="dd-opt-title">Export Excel</div>
+                            <div class="dd-opt-sub">Download filtered list as .xlsx</div>
+                        </div>
+                        <i class="fas fa-check dd-tick"></i>
+                    </button>
+
+                    <button class="dd-opt" id="ddp-download-all" onclick="selectDropdownAction('download-all')">
+                        <span class="dd-opt-icon" style="background:rgba(59,130,246,0.12);color:#2563eb;">
+                            <i class="fas fa-cloud-download-alt"></i>
+                        </span>
+                        <div>
+                            <div class="dd-opt-title">Download All Files</div>
+                            <div class="dd-opt-sub">ZIP of filtered customers' docs</div>
+                        </div>
+                        <i class="fas fa-check dd-tick"></i>
+                    </button>
+
+                    <button class="dd-opt" id="ddp-import" onclick="selectDropdownAction('import')">
+                        <span class="dd-opt-icon" style="background:rgba(34,197,94,0.12);color:#16a34a;">
+                            <i class="fas fa-file-import"></i>
+                        </span>
+                        <div>
+                            <div class="dd-opt-title">Import / Add</div>
+                            <div class="dd-opt-sub">Upload Excel or add a customer</div>
+                        </div>
+                        <i class="fas fa-check dd-tick"></i>
+                    </button>
+
+                    <div id="ddp-super-tools" style="display:none;">
+                        <div class="dd-sep"></div>
+                        <button class="dd-opt" id="ddp-select" onclick="selectDropdownAction('select')">
+                            <span class="dd-opt-icon" style="background:rgba(249,115,22,0.12);color:#ea580c;">
+                                <i class="fas fa-check-square"></i>
+                            </span>
+                            <div>
+                                <div class="dd-opt-title" id="ddp-select-label">Selection Mode</div>
+                                <div class="dd-opt-sub">Select rows for bulk delete</div>
+                            </div>
+                            <i class="fas fa-check dd-tick"></i>
+                        </button>
+
+                        <button id="btn-delete-selected" onclick="executeDeleteSelected()"
+                            style="display:none;gap:12px;padding:10px 12px;cursor:pointer;border-radius:10px;border:1.5px solid #fca5a5;background:rgba(239,68,68,0.07);width:100%;text-align:left;color:#dc2626;align-items:center;margin-top:4px;">
+                            <span class="dd-opt-icon" style="background:rgba(239,68,68,0.12);color:#dc2626;width:34px;height:34px;">
+                                <i class="fas fa-trash-alt"></i>
+                            </span>
+                            <div>
+                                <div class="dd-opt-title" style="color:#dc2626;">Delete Selected (<span id="delete-count">0</span>)</div>
+                                <div class="dd-opt-sub">Permanently remove chosen rows</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>`;
+            document.body.appendChild(portal);
+        })();
+
+        /* ── Position & toggle the portal ───────────────────────────────── */
+        window._lastDdAction = 'export-excel';
+        window._ddOpen = false;
+
+        window.toggleActionDropdown = () => {
+            const portal = document.getElementById('action-dd-portal');
+            const chevron = document.getElementById('action-dropdown-chevron');
+            const trigger = document.getElementById('action-chevron-btn');
+
+            window._ddOpen = !window._ddOpen;
+
+            if (window._ddOpen) {
+                // Apply dark mode class
+                const isDark = document.documentElement.classList.contains('dark');
+                portal.classList.toggle('dark-mode', isDark);
+
+                // Compute position from trigger button bounding rect
+                const rect = trigger.getBoundingClientRect();
+                const menuW = 280;
+                const margin = 8;
+
+                // Prefer aligning right edge to trigger right edge
+                let left = rect.right - menuW;
+                if (left < margin) left = margin;
+                if (left + menuW > window.innerWidth - margin) left = window.innerWidth - menuW - margin;
+
+                // Show below trigger; if not enough room below, show above
+                const spaceBelow = window.innerHeight - rect.bottom - margin;
+                const approxH = 250; // rough portal height
+                let top;
+                if (spaceBelow >= approxH || spaceBelow > window.innerHeight / 2) {
+                    top = rect.bottom + 6;
+                } else {
+                    // position above
+                    top = rect.top - approxH - 6;
+                    if (top < margin) top = margin;
+                }
+
+                portal.style.left = left + 'px';
+                portal.style.top = top + 'px';
+                portal.style.display = 'block';
+                // Reset animation
+                portal.style.animation = 'none';
+                requestAnimationFrame(() => { portal.style.animation = ''; });
+            } else {
+                portal.style.display = 'none';
+            }
+
+            if (chevron) chevron.style.transform = window._ddOpen ? 'rotate(180deg)' : '';
+        };
+
+        // Close portal on outside click
+        document.addEventListener('click', (e) => {
+            const portal = document.getElementById('action-dd-portal');
+            const wrapper = document.getElementById('action-dropdown-wrapper');
+            if (!portal || !wrapper) return;
+            if (!portal.contains(e.target) && !wrapper.contains(e.target)) {
+                portal.style.display = 'none';
+                const chevron = document.getElementById('action-dropdown-chevron');
+                if (chevron) chevron.style.transform = '';
+                window._ddOpen = false;
+            }
+        });
+
+        // Close on scroll/resize so it doesn't drift
+        ['scroll', 'resize'].forEach(ev => window.addEventListener(ev, () => {
+            if (window._ddOpen) {
+                document.getElementById('action-dd-portal').style.display = 'none';
+                const chevron = document.getElementById('action-dropdown-chevron');
+                if (chevron) chevron.style.transform = '';
+                window._ddOpen = false;
+            }
+        }, { passive: true }));
+
+        /* ── Select an action ───────────────────────────────────────────── */
+        const _ddCfg = {
+            'export-excel': { icon: 'fas fa-file-excel', label: 'Export Excel', portalId: 'ddp-export-excel', run: () => exportToCSV() },
+            'download-all': { icon: 'fas fa-cloud-download-alt', label: 'Download All Files', portalId: 'ddp-download-all', run: () => downloadAllCustomersDocs() },
+            'import': { icon: 'fas fa-file-import', label: 'Import / Add', portalId: 'ddp-import', run: () => openModal('bulkModal') },
+            'select': { icon: 'fas fa-check-square', label: 'Selection Mode', portalId: 'ddp-select', run: () => toggleSelectionDeleteMode() }
+        };
+
+        window.selectDropdownAction = (action, silent = false) => {
+            const c = _ddCfg[action] || _ddCfg['export-excel'];
+
+            // Deselect all portal options
+            document.querySelectorAll('#action-dd-portal .dd-opt').forEach(b => b.classList.remove('selected'));
+            // Select chosen
+            const chosen = document.getElementById(c.portalId);
+            if (chosen) chosen.classList.add('selected');
+
+            // Update split-button label
+            document.getElementById('action-dropdown-icon').className = c.icon;
+            document.getElementById('action-dropdown-label').textContent = c.label;
+
+            window._lastDdAction = action;
+
+            // Close portal
+            const portal = document.getElementById('action-dd-portal');
+            const chevron = document.getElementById('action-dropdown-chevron');
+            if (portal) portal.style.display = 'none';
+            if (chevron) chevron.style.transform = '';
+            window._ddOpen = false;
+
+            if (!silent) c.run();
+        };
+
+        /* ── Execute whatever is currently selected (left-button click) ── */
+        window.executeCurrentDropdownAction = () => {
+            const c = _ddCfg[window._lastDdAction] || _ddCfg['export-excel'];
+            c.run();
+        };
+
+        /* ── Selection-delete mode toggle ───────────────────────────────── */
         window.toggleSelectionDeleteMode = () => {
             window.isSelectDeleteMode = !window.isSelectDeleteMode;
             window.selectedUsersForDeletion.clear();
-            document.getElementById('btn-delete-selected').classList.toggle('hidden', !window.isSelectDeleteMode);
 
-            const selBtn = document.getElementById('btn-select-delete');
-            selBtn.classList.toggle('bg-primary', window.isSelectDeleteMode);
-            selBtn.classList.toggle('text-black', window.isSelectDeleteMode);
-            selBtn.classList.toggle('ring-4', window.isSelectDeleteMode);
-            selBtn.classList.toggle('ring-yellow-500/30', window.isSelectDeleteMode);
+            // Show / hide delete button inside portal
+            const delBtn = document.getElementById('btn-delete-selected');
+            if (delBtn) delBtn.style.display = window.isSelectDeleteMode ? 'flex' : 'none';
+
+            // Update portal select label
+            const lbl = document.getElementById('ddp-select-label');
+            if (lbl) lbl.textContent = window.isSelectDeleteMode ? 'Selection Mode (ON)' : 'Selection Mode';
+
+            // Sync split-button label
+            if (window.isSelectDeleteMode) {
+                document.getElementById('action-dropdown-icon').className = 'fas fa-check-square';
+                document.getElementById('action-dropdown-label').textContent = 'Selection Mode';
+            } else {
+                const c = _ddCfg[window._lastDdAction] || _ddCfg['export-excel'];
+                document.getElementById('action-dropdown-icon').className = c.icon;
+                document.getElementById('action-dropdown-label').textContent = c.label;
+            }
 
             document.getElementById('delete-count').innerText = '0';
             renderTable();
         };
+
+        /* ── Show super-admin tools in portal when role is super_admin ── */
+        window._showSuperAdminPortalTools = () => {
+            const el = document.getElementById('ddp-super-tools');
+            if (el) el.style.display = 'block';
+            // also show old wrapper for compat
+            const st = document.getElementById('super-admin-tools');
+            if (st) st.classList.remove('hidden');
+        };
+
+        // Init default highlight
+        window.selectDropdownAction('export-excel', true);
 
         window.toggleSelectUser = (id, trElement) => {
             if (!window.isSelectDeleteMode) return;
@@ -4606,33 +5039,33 @@
         }
 
         function renderLoanTable() {
-                const tbody = document.getElementById('loan-table-body');
-                if (!tbody) return;
-                const search = (document.getElementById('loan-search')?.value || '').trim().toLowerCase();
-                const productFilter = (document.getElementById('loan-product-filter')?.value || 'all');
-                const terminalFilter = (document.getElementById('loan-terminal-filter')?.value || 'all');
-                tbody.innerHTML = '';
-                const filtered = allJourneys.filter(j => {
-                    const searchStr = ((j.whatsapp || '') + (j.name || '') + (j.convo_title || '')).toString().toLowerCase();
-                    if (search && !searchStr.includes(search)) return false;
-                    if (productFilter && productFilter !== 'all') {
-                        if (mapProductName(j.loan_product).toLowerCase() !== productFilter.toLowerCase()) return false;
-                    }
-                    if (terminalFilter && terminalFilter !== 'all') {
-                        if ((j.last_stage || '') !== terminalFilter) return false;
-                    }
-                    return true;
-                });
-                filtered.forEach((j, i) => {
-                    const idx = i + 1;
-                    const raw = j.raw || {};
-                    const waNum = escapeHtml(j.whatsapp || 'Unknown');
-                    const dateStr = formatSessionDate(j.timestamp);
+            const tbody = document.getElementById('loan-table-body');
+            if (!tbody) return;
+            const search = (document.getElementById('loan-search')?.value || '').trim().toLowerCase();
+            const productFilter = (document.getElementById('loan-product-filter')?.value || 'all');
+            const terminalFilter = (document.getElementById('loan-terminal-filter')?.value || 'all');
+            tbody.innerHTML = '';
+            const filtered = allJourneys.filter(j => {
+                const searchStr = ((j.whatsapp || '') + (j.name || '') + (j.convo_title || '')).toString().toLowerCase();
+                if (search && !searchStr.includes(search)) return false;
+                if (productFilter && productFilter !== 'all') {
+                    if (mapProductName(j.loan_product).toLowerCase() !== productFilter.toLowerCase()) return false;
+                }
+                if (terminalFilter && terminalFilter !== 'all') {
+                    if ((j.last_stage || '') !== terminalFilter) return false;
+                }
+                return true;
+            });
+            filtered.forEach((j, i) => {
+                const idx = i + 1;
+                const raw = j.raw || {};
+                const waNum = escapeHtml(j.whatsapp || 'Unknown');
+                const dateStr = formatSessionDate(j.timestamp);
 
-                    const badgeText = escapeHtml(j.last_stage || 'N/A');
-                    const badgeClasses = getStageBadgeClass(j.last_stage);
-                    const surveysHtml = renderSurveyBadgesHtml(j);
-                    const html = `
+                const badgeText = escapeHtml(j.last_stage || 'N/A');
+                const badgeClasses = getStageBadgeClass(j.last_stage);
+                const surveysHtml = renderSurveyBadgesHtml(j);
+                const html = `
                     <tr class="hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
                         <td class="p-3 text-sm font-medium text-grey cursor-pointer" onclick="showJourneyDetails('${j.id}')">${idx}</td>
                         <td class="p-3 text-sm font-bold">
@@ -4652,146 +5085,146 @@
                             </div>
                         </td>
                     </tr>`;
-                    tbody.insertAdjacentHTML('beforeend', html);
-                });
-            }
-
-            function downloadLoanLogsExcel() {
-                const rows = allJourneys.map(j => ({ WhatsApp_Number: j.whatsapp, Loan_Product: j.loan_product, Last_Stage: j.last_stage, Duration: formatDurationReadable(j.duration_seconds), Timestamp: formatReadableDate(j.timestamp) }));
-                if (!rows || rows.length === 0) { Swal.fire('Info', 'No data to export.', 'info'); return; }
-                downloadExcelHelper('Loan_Journeys.xlsx', rows);
-            }
-
-            function getStageBadgeClass(stage) {
-                const s = (stage || '').toString().toLowerCase();
-                if (/apply|agent|requested|talk to agent|apply now|agent requested|agent_request/i.test(s)) return 'bg-gradient-to-r from-green-50 to-green-100 text-green-800 ring-1 ring-green-200 dark:from-emerald-800 dark:to-emerald-900 dark:text-emerald-200';
-                if (/enquir|enquiry|inquiry|ask/i.test(s)) return 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 ring-1 ring-blue-200 dark:from-sky-800 dark:to-sky-900 dark:text-sky-200';
-                if (/complaint/i.test(s)) return 'bg-gradient-to-r from-red-50 to-red-100 text-red-800 ring-1 ring-red-200 dark:from-rose-800 dark:to-rose-900 dark:text-rose-200';
-                if (/requirem|requirements|checklist|documents/i.test(s)) return 'bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-800 ring-1 ring-yellow-200 dark:from-amber-800 dark:to-amber-900 dark:text-amber-200';
-                if (/about|intro|details|product/i.test(s)) return 'bg-gradient-to-r from-slate-50 to-slate-100 text-slate-800 ring-1 ring-slate-200 dark:from-zinc-800 dark:to-zinc-900 dark:text-zinc-200';
-                if (/menu|choices|main|product menu|product_menu|menu_view/i.test(s) || s.trim() === '') return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 ring-1 ring-gray-200 dark:from-zinc-700 dark:to-zinc-800 dark:text-gray-200';
-                return 'bg-gray-50 text-gray-700 ring-1 ring-gray-200 dark:bg-zinc-800 dark:text-gray-200';
-            }
-
-            function getSurveyCount(j) {
-                const raw = j.raw || {};
-                let count = 0;
-                if (raw.survey_loan_q1 || raw.survey_loan_q2 || raw.survey_loan_q3) count++;
-                if ((raw.conversation && (raw.conversation.survey_agent_q1 || raw.conversation.survey_agent_q2 || raw.conversation.survey_agent_q3)) || raw.survey_agent_q1 || raw.survey_agent_q2 || raw.survey_agent_q3) count++;
-                return count;
-            }
-
-            function renderSurveyBadgesHtml(j) {
-                const raw = j.raw || {};
-                const parts = [];
-                if (raw.survey_loan_q1 || raw.survey_loan_q2 || raw.survey_loan_q3) {
-                    parts.push(`<button data-survey-type="loan" data-id="${j.id}" class="survey-badge cursor-pointer inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-800 hover:bg-indigo-100 transition-colors"><i class='fas fa-clipboard-list'></i><span>Loan</span></button>`);
-                }
-                if ((raw.conversation && (raw.conversation.survey_agent_q1 || raw.conversation.survey_agent_q2 || raw.conversation.survey_agent_q3)) || raw.survey_agent_q1 || raw.survey_agent_q2 || raw.survey_agent_q3) {
-                    parts.push(`<button data-survey-type="agent" data-id="${j.id}" class="survey-badge cursor-pointer inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium bg-teal-50 text-teal-800 hover:bg-teal-100 transition-colors"><i class='fas fa-user-check'></i><span>Agent</span></button>`);
-                }
-                if (parts.length === 0) return '<span class="text-xs text-gray-400">—</span>';
-                return parts.join(' ');
-            }
-
-            function showSurveyModal(type, id) {
-                const j = allJourneys.find(x => x.id === id);
-                if (!j) return;
-                const raw = j.raw || {};
-                let html = '';
-                // determine quiz date from common fields
-                const quizDate = raw.survey_loan_completed_at || raw.survey_loan_timestamp || raw.survey_completed_at || raw.survey_timestamp || raw.timestamp || j.timestamp || '';
-                const dateStr = formatReadableDate(quizDate);
-                if (type === 'loan') {
-                    html += `<div class="text-xs text-gray-500 mb-2">Quiz date: ${dateStr || 'Unknown'}</div>`;
-                    html += `<h4 class="font-bold mb-2">Loan Survey</h4>`;
-                    html += `<div class="space-y-3">`;
-                    html += `<div><strong>Q1 - How easy was it to navigate the loan application menu?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q1 || 'Not answered')}</div></div>`;
-                    html += `<div><strong>Q2 - Did you find the application requirements checklist clear and helpful?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q2 || 'Not answered')}</div></div>`;
-                    html += `<div><strong>Q3 - Do you have any suggestions to make this process smoother?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q3 || 'Not answered')}</div></div>`;
-                    html += `</div>`;
-                } else if (type === 'agent') {
-                    const s = raw.conversation || raw;
-                    const agentQuizDate = (s && (s.survey_agent_completed_at || s.survey_agent_timestamp)) || raw.survey_agent_completed_at || raw.survey_agent_timestamp || raw.timestamp || j.timestamp || '';
-                    const agentDateStr = formatReadableDate(agentQuizDate);
-                    html += `<div class="text-xs text-gray-500 mb-2">Quiz date: ${agentDateStr || 'Unknown'}</div>`;
-                    html += `<h4 class="font-bold mb-2">Agent Survey</h4>`;
-                    html += `<div class="space-y-3">`;
-                    html += `<div><strong>Q1 - Satisfaction:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q1 || 'Not answered')}</div></div>`;
-                    html += `<div><strong>Q2 - Resolution:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q2 || 'Not answered')}</div></div>`;
-                    html += `<div><strong>Q3 - Comments:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q3 || 'Not answered')}</div></div>`;
-                    html += `</div>`;
-                }
-                const modal = document.getElementById('survey-modal');
-                const body = document.getElementById('survey-modal-body');
-                const title = document.getElementById('survey-modal-title');
-                title.innerText = `${(type === 'loan') ? 'Loan Survey' : 'Agent Survey'} — ${j.whatsapp || id}`;
-                body.innerHTML = html;
-                openModal('survey-modal');
-            }
-
-            // Delegate survey badge clicks and name links to avoid inline onclick issues
-            document.addEventListener('click', (e) => {
-                const sb = e.target.closest && e.target.closest('.survey-badge');
-                if (sb) {
-                    const type = sb.dataset.surveyType;
-                    const id = sb.dataset.id;
-                    if (type && id) {
-                        showSurveyModal(type, id);
-                        e.stopPropagation();
-                        e.preventDefault();
-                        return;
-                    }
-                }
-                const jl = e.target.closest && e.target.closest('.journey-link');
-                if (jl) {
-                    const id = jl.dataset.id;
-                    if (id) {
-                        showJourneyDetails(id);
-                        e.preventDefault();
-                    }
-                }
+                tbody.insertAdjacentHTML('beforeend', html);
             });
+        }
 
-            function showLoanOverlay(filterValue, filterType) {
-                const container = document.getElementById('loan-list-container');
-                const title = document.getElementById('loan-overlay-title');
-                const countEl = document.getElementById('loan-overlay-count');
-                if (!container) return;
-                const type = filterType || 'stage';
-                const label = filterValue || 'All';
-                title.innerText = `Journeys — ${label}`;
-                const normalizeSentimentStr = (s) => {
-                    s = (s || '').toString().toLowerCase();
-                    if (!s || s.trim() === '') return 'neutral';
-                    if (/neutral|ntrl/.test(s)) return 'neutral';
-                    if (/pos|positive|good|happy|satisfied|excellent/.test(s)) return 'positive';
-                    if (/neg|negative|bad|angry|sad|unsatisfied|poor/.test(s)) return 'negative';
-                    return 'neutral';
-                };
+        function downloadLoanLogsExcel() {
+            const rows = allJourneys.map(j => ({ WhatsApp_Number: j.whatsapp, Loan_Product: j.loan_product, Last_Stage: j.last_stage, Duration: formatDurationReadable(j.duration_seconds), Timestamp: formatReadableDate(j.timestamp) }));
+            if (!rows || rows.length === 0) { Swal.fire('Info', 'No data to export.', 'info'); return; }
+            downloadExcelHelper('Loan_Journeys.xlsx', rows);
+        }
 
-                const filtered = allJourneys.filter(j => {
-                    if (!label || label === 'All') return true;
-                    if (type === 'product') {
-                        return mapProductName(j.loan_product) === label;
-                    }
-                    if (type === 'sentiment') {
-                        const s = normalizeSentimentStr(j.convo_sentiment || (j.raw && (j.raw.convo_sentiment || j.raw.sentiment)) || j.sentiment || '');
-                        return s.toString().toLowerCase() === label.toString().toLowerCase();
-                    }
-                    // default: stage
-                    if (label === 'Session exited without action') {
-                        const s = (j.last_stage || '').toString().toLowerCase();
-                        return !(/apply|agent|requested|enquir|enquiry|complaint|requirem|about|intro|menu|choices/i.test(s));
-                    }
-                    return (j.last_stage || '').toString().toLowerCase().includes(label.split(' ')[0].toString().toLowerCase());
-                });
-                countEl.innerText = `${filtered.length} Journeys`;
-                container.innerHTML = '';
-                if (filtered.length === 0) container.innerHTML = '<div class="p-6 text-center text-gray-500">No journeys for this selection yet.</div>';
-                filtered.forEach(j => {
-                    const surveysHtml = renderSurveyBadgesHtml(j);
-                    const html = `
+        function getStageBadgeClass(stage) {
+            const s = (stage || '').toString().toLowerCase();
+            if (/apply|agent|requested|talk to agent|apply now|agent requested|agent_request/i.test(s)) return 'bg-gradient-to-r from-green-50 to-green-100 text-green-800 ring-1 ring-green-200 dark:from-emerald-800 dark:to-emerald-900 dark:text-emerald-200';
+            if (/enquir|enquiry|inquiry|ask/i.test(s)) return 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 ring-1 ring-blue-200 dark:from-sky-800 dark:to-sky-900 dark:text-sky-200';
+            if (/complaint/i.test(s)) return 'bg-gradient-to-r from-red-50 to-red-100 text-red-800 ring-1 ring-red-200 dark:from-rose-800 dark:to-rose-900 dark:text-rose-200';
+            if (/requirem|requirements|checklist|documents/i.test(s)) return 'bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-800 ring-1 ring-yellow-200 dark:from-amber-800 dark:to-amber-900 dark:text-amber-200';
+            if (/about|intro|details|product/i.test(s)) return 'bg-gradient-to-r from-slate-50 to-slate-100 text-slate-800 ring-1 ring-slate-200 dark:from-zinc-800 dark:to-zinc-900 dark:text-zinc-200';
+            if (/menu|choices|main|product menu|product_menu|menu_view/i.test(s) || s.trim() === '') return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 ring-1 ring-gray-200 dark:from-zinc-700 dark:to-zinc-800 dark:text-gray-200';
+            return 'bg-gray-50 text-gray-700 ring-1 ring-gray-200 dark:bg-zinc-800 dark:text-gray-200';
+        }
+
+        function getSurveyCount(j) {
+            const raw = j.raw || {};
+            let count = 0;
+            if (raw.survey_loan_q1 || raw.survey_loan_q2 || raw.survey_loan_q3) count++;
+            if ((raw.conversation && (raw.conversation.survey_agent_q1 || raw.conversation.survey_agent_q2 || raw.conversation.survey_agent_q3)) || raw.survey_agent_q1 || raw.survey_agent_q2 || raw.survey_agent_q3) count++;
+            return count;
+        }
+
+        function renderSurveyBadgesHtml(j) {
+            const raw = j.raw || {};
+            const parts = [];
+            if (raw.survey_loan_q1 || raw.survey_loan_q2 || raw.survey_loan_q3) {
+                parts.push(`<button data-survey-type="loan" data-id="${j.id}" class="survey-badge cursor-pointer inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-800 hover:bg-indigo-100 transition-colors"><i class='fas fa-clipboard-list'></i><span>Loan</span></button>`);
+            }
+            if ((raw.conversation && (raw.conversation.survey_agent_q1 || raw.conversation.survey_agent_q2 || raw.conversation.survey_agent_q3)) || raw.survey_agent_q1 || raw.survey_agent_q2 || raw.survey_agent_q3) {
+                parts.push(`<button data-survey-type="agent" data-id="${j.id}" class="survey-badge cursor-pointer inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium bg-teal-50 text-teal-800 hover:bg-teal-100 transition-colors"><i class='fas fa-user-check'></i><span>Agent</span></button>`);
+            }
+            if (parts.length === 0) return '<span class="text-xs text-gray-400">—</span>';
+            return parts.join(' ');
+        }
+
+        function showSurveyModal(type, id) {
+            const j = allJourneys.find(x => x.id === id);
+            if (!j) return;
+            const raw = j.raw || {};
+            let html = '';
+            // determine quiz date from common fields
+            const quizDate = raw.survey_loan_completed_at || raw.survey_loan_timestamp || raw.survey_completed_at || raw.survey_timestamp || raw.timestamp || j.timestamp || '';
+            const dateStr = formatReadableDate(quizDate);
+            if (type === 'loan') {
+                html += `<div class="text-xs text-gray-500 mb-2">Quiz date: ${dateStr || 'Unknown'}</div>`;
+                html += `<h4 class="font-bold mb-2">Loan Survey</h4>`;
+                html += `<div class="space-y-3">`;
+                html += `<div><strong>Q1 - How easy was it to navigate the loan application menu?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q1 || 'Not answered')}</div></div>`;
+                html += `<div><strong>Q2 - Did you find the application requirements checklist clear and helpful?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q2 || 'Not answered')}</div></div>`;
+                html += `<div><strong>Q3 - Do you have any suggestions to make this process smoother?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q3 || 'Not answered')}</div></div>`;
+                html += `</div>`;
+            } else if (type === 'agent') {
+                const s = raw.conversation || raw;
+                const agentQuizDate = (s && (s.survey_agent_completed_at || s.survey_agent_timestamp)) || raw.survey_agent_completed_at || raw.survey_agent_timestamp || raw.timestamp || j.timestamp || '';
+                const agentDateStr = formatReadableDate(agentQuizDate);
+                html += `<div class="text-xs text-gray-500 mb-2">Quiz date: ${agentDateStr || 'Unknown'}</div>`;
+                html += `<h4 class="font-bold mb-2">Agent Survey</h4>`;
+                html += `<div class="space-y-3">`;
+                html += `<div><strong>Q1 - Satisfaction:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q1 || 'Not answered')}</div></div>`;
+                html += `<div><strong>Q2 - Resolution:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q2 || 'Not answered')}</div></div>`;
+                html += `<div><strong>Q3 - Comments:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q3 || 'Not answered')}</div></div>`;
+                html += `</div>`;
+            }
+            const modal = document.getElementById('survey-modal');
+            const body = document.getElementById('survey-modal-body');
+            const title = document.getElementById('survey-modal-title');
+            title.innerText = `${(type === 'loan') ? 'Loan Survey' : 'Agent Survey'} — ${j.whatsapp || id}`;
+            body.innerHTML = html;
+            openModal('survey-modal');
+        }
+
+        // Delegate survey badge clicks and name links to avoid inline onclick issues
+        document.addEventListener('click', (e) => {
+            const sb = e.target.closest && e.target.closest('.survey-badge');
+            if (sb) {
+                const type = sb.dataset.surveyType;
+                const id = sb.dataset.id;
+                if (type && id) {
+                    showSurveyModal(type, id);
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+            }
+            const jl = e.target.closest && e.target.closest('.journey-link');
+            if (jl) {
+                const id = jl.dataset.id;
+                if (id) {
+                    showJourneyDetails(id);
+                    e.preventDefault();
+                }
+            }
+        });
+
+        function showLoanOverlay(filterValue, filterType) {
+            const container = document.getElementById('loan-list-container');
+            const title = document.getElementById('loan-overlay-title');
+            const countEl = document.getElementById('loan-overlay-count');
+            if (!container) return;
+            const type = filterType || 'stage';
+            const label = filterValue || 'All';
+            title.innerText = `Journeys — ${label}`;
+            const normalizeSentimentStr = (s) => {
+                s = (s || '').toString().toLowerCase();
+                if (!s || s.trim() === '') return 'neutral';
+                if (/neutral|ntrl/.test(s)) return 'neutral';
+                if (/pos|positive|good|happy|satisfied|excellent/.test(s)) return 'positive';
+                if (/neg|negative|bad|angry|sad|unsatisfied|poor/.test(s)) return 'negative';
+                return 'neutral';
+            };
+
+            const filtered = allJourneys.filter(j => {
+                if (!label || label === 'All') return true;
+                if (type === 'product') {
+                    return mapProductName(j.loan_product) === label;
+                }
+                if (type === 'sentiment') {
+                    const s = normalizeSentimentStr(j.convo_sentiment || (j.raw && (j.raw.convo_sentiment || j.raw.sentiment)) || j.sentiment || '');
+                    return s.toString().toLowerCase() === label.toString().toLowerCase();
+                }
+                // default: stage
+                if (label === 'Session exited without action') {
+                    const s = (j.last_stage || '').toString().toLowerCase();
+                    return !(/apply|agent|requested|enquir|enquiry|complaint|requirem|about|intro|menu|choices/i.test(s));
+                }
+                return (j.last_stage || '').toString().toLowerCase().includes(label.split(' ')[0].toString().toLowerCase());
+            });
+            countEl.innerText = `${filtered.length} Journeys`;
+            container.innerHTML = '';
+            if (filtered.length === 0) container.innerHTML = '<div class="p-6 text-center text-gray-500">No journeys for this selection yet.</div>';
+            filtered.forEach(j => {
+                const surveysHtml = renderSurveyBadgesHtml(j);
+                const html = `
                     <div class="p-3 border-b border-gray-100 dark:border-night-border hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
                         <div class="flex justify-between items-start">
                             <div>
@@ -4808,55 +5241,55 @@
                             </div>
                         </div>
                     </div>`;
-                    container.insertAdjacentHTML('beforeend', html);
-                });
-                openModal('loan-overlay');
-            }
+                container.insertAdjacentHTML('beforeend', html);
+            });
+            openModal('loan-overlay');
+        }
 
-            function closeLoanOverlay() { closeModal('loan-overlay'); }
+        function closeLoanOverlay() { closeModal('loan-overlay'); }
 
-            function showJourneyDetails(id) {
-                const j = allJourneys.find(x => x.id === id);
-                if (!j) return;
-                const content = document.getElementById('loan-journey-content');
-                const titleEl = document.getElementById('loan-journey-title');
-                if (!content || !titleEl) return;
+        function showJourneyDetails(id) {
+            const j = allJourneys.find(x => x.id === id);
+            if (!j) return;
+            const content = document.getElementById('loan-journey-content');
+            const titleEl = document.getElementById('loan-journey-title');
+            if (!content || !titleEl) return;
 
-                const userWhatsapp = j.whatsapp;
-                const userJourneys = allJourneys.filter(x => x.whatsapp === userWhatsapp).sort((a, b) => b.timestamp - a.timestamp);
-                const latestJ = userJourneys[0];
+            const userWhatsapp = j.whatsapp;
+            const userJourneys = allJourneys.filter(x => x.whatsapp === userWhatsapp).sort((a, b) => b.timestamp - a.timestamp);
+            const latestJ = userJourneys[0];
 
-                // Calculate User Metrics
-                const totalSessions = userJourneys.length;
-                const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
-                let assistantCalls = 0;
+            // Calculate User Metrics
+            const totalSessions = userJourneys.length;
+            const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+            let assistantCalls = 0;
 
-                userJourneys.forEach(uj => {
-                    const s = normalizeSentimentStr(uj.convo_sentiment || (uj.raw && (uj.raw.convo_sentiment || uj.raw.sentiment)) || uj.sentiment || '');
-                    sentimentCounts[s.toLowerCase()]++;
-                    if (isTerminalStage(uj.last_stage)) assistantCalls++;
-                });
+            userJourneys.forEach(uj => {
+                const s = normalizeSentimentStr(uj.convo_sentiment || (uj.raw && (uj.raw.convo_sentiment || uj.raw.sentiment)) || uj.sentiment || '');
+                sentimentCounts[s.toLowerCase()]++;
+                if (isTerminalStage(uj.last_stage)) assistantCalls++;
+            });
 
-                const latestTitle = latestJ.convo_title || (latestJ.raw && latestJ.raw.convo_title) || 'General Enquiry Interaction';
-                const latestSummary = latestJ.convo_summary || (latestJ.raw && latestJ.raw.convo_summary) || 'No summary available for the latest session.';
+            const latestTitle = latestJ.convo_title || (latestJ.raw && latestJ.raw.convo_title) || 'General Enquiry Interaction';
+            const latestSummary = latestJ.convo_summary || (latestJ.raw && latestJ.raw.convo_summary) || 'No summary available for the latest session.';
 
-                titleEl.innerText = `User Profile`;
-                document.getElementById('user-profile-subtitle').innerText = userWhatsapp;
+            titleEl.innerText = `User Profile`;
+            document.getElementById('user-profile-subtitle').innerText = userWhatsapp;
 
-                // Dominant sentiment
-                const dominantSentiment = Object.entries(sentimentCounts).sort((a,b)=>b[1]-a[1])[0];
-                const sentimentLabel = dominantSentiment ? dominantSentiment[0] : 'neutral';
-                const sentimentColorMap = { positive: 'text-emerald-500', neutral: 'text-gray-400', negative: 'text-red-500' };
-                const sentimentIconMap  = { positive: 'fa-smile',         neutral: 'fa-meh',       negative: 'fa-frown' };
-                const sentimentColor = sentimentColorMap[sentimentLabel] || 'text-gray-400';
-                const sentimentIcon  = sentimentIconMap[sentimentLabel]  || 'fa-meh';
+            // Dominant sentiment
+            const dominantSentiment = Object.entries(sentimentCounts).sort((a, b) => b[1] - a[1])[0];
+            const sentimentLabel = dominantSentiment ? dominantSentiment[0] : 'neutral';
+            const sentimentColorMap = { positive: 'text-emerald-500', neutral: 'text-gray-400', negative: 'text-red-500' };
+            const sentimentIconMap = { positive: 'fa-smile', neutral: 'fa-meh', negative: 'fa-frown' };
+            const sentimentColor = sentimentColorMap[sentimentLabel] || 'text-gray-400';
+            const sentimentIcon = sentimentIconMap[sentimentLabel] || 'fa-meh';
 
-                // Last product seen across all sessions
-                const latestProduct = mapProductName(latestJ.loan_product) || 'General';
-                const latestStage   = latestJ.last_stage || 'N/A';
-                const totalDuration = userJourneys.reduce((s,x)=>s+(Number(x.duration_seconds)||0),0);
+            // Last product seen across all sessions
+            const latestProduct = mapProductName(latestJ.loan_product) || 'General';
+            const latestStage = latestJ.last_stage || 'N/A';
+            const totalDuration = userJourneys.reduce((s, x) => s + (Number(x.duration_seconds) || 0), 0);
 
-                content.innerHTML = `
+            content.innerHTML = `
                 <div class="flex flex-col">
 
                     <!-- Profile Header Strip -->
@@ -4932,32 +5365,32 @@
                 </div>
             `;
 
-                openModal('loan-journey-modal');
+            openModal('loan-journey-modal');
 
-                // Populate initial session view after DOM is ready
-                setTimeout(() => {
-                    updateProfileSessionView();
-                }, 80);
-            }
+            // Populate initial session view after DOM is ready
+            setTimeout(() => {
+                updateProfileSessionView();
+            }, 80);
+        }
 
-            window.updateProfileSessionView = () => {
-                const select = document.getElementById('profile-session-dropdown');
-                const container = document.getElementById('profile-session-view');
-                if (!select || !container) return;
-                const sid = select.value;
-                const j = allJourneys.find(x => x.id === sid);
-                if (!j) return;
+        window.updateProfileSessionView = () => {
+            const select = document.getElementById('profile-session-dropdown');
+            const container = document.getElementById('profile-session-view');
+            if (!select || !container) return;
+            const sid = select.value;
+            const j = allJourneys.find(x => x.id === sid);
+            if (!j) return;
 
-                const raw = j.raw || {};
-                const surveysHtml = renderSurveyBadgesHtml(j);
-                const sentiment = normalizeSentimentStr(j.convo_sentiment || raw.convo_sentiment || j.sentiment || raw.sentiment || '');
-                const sentColorMap = { Positive: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', Neutral: 'bg-gray-100 text-gray-600 dark:bg-zinc-700 dark:text-gray-300', Negative: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
-                const sentBadge = sentColorMap[sentiment] || sentColorMap['Neutral'];
-                const product = escapeHtml(mapProductName(j.loan_product) || 'General');
-                const transcript = escapeHtml(raw.full_transcript || raw.fullTranscript || '').replace(/\n/g, '<br>');
-                const summary = escapeHtml(j.convo_summary || raw.convo_summary || '');
+            const raw = j.raw || {};
+            const surveysHtml = renderSurveyBadgesHtml(j);
+            const sentiment = normalizeSentimentStr(j.convo_sentiment || raw.convo_sentiment || j.sentiment || raw.sentiment || '');
+            const sentColorMap = { Positive: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', Neutral: 'bg-gray-100 text-gray-600 dark:bg-zinc-700 dark:text-gray-300', Negative: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+            const sentBadge = sentColorMap[sentiment] || sentColorMap['Neutral'];
+            const product = escapeHtml(mapProductName(j.loan_product) || 'General');
+            const transcript = escapeHtml(raw.full_transcript || raw.fullTranscript || '').replace(/\n/g, '<br>');
+            const summary = escapeHtml(j.convo_summary || raw.convo_summary || '');
 
-                container.innerHTML = `
+            container.innerHTML = `
                 <div class="divide-y dark:divide-night-border">
 
                     <!-- Session Meta Row -->
@@ -5011,188 +5444,188 @@
                     </div>
                 </div>
             `;
-            }
-            // Ensure overlays are top-level so backdrop-blur isn't clipped by transformed ancestors
-            (function moveModalsToBody() {
-                try {
-                    const ids = ['loan-overlay', 'loan-journey-modal', 'survey-modal', 'chatlog-modal'];
-                    ids.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el && el.parentElement !== document.body) {
-                            document.body.appendChild(el);
-                        }
-                    });
-                } catch (e) { console.warn('modal move error', e); }
-            })();
-            // Toggle charts <-> live sessions view with slide-up arrival animation
-            function animateInFromBottom(el) {
-                return new Promise(resolve => {
-                    if (!el) return resolve();
-                    el.classList.remove('hidden');
-                    el.style.willChange = 'transform, opacity';
-                    el.style.transform = 'translateY(24px)';
-                    el.style.opacity = '0';
-                    el.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), opacity 420ms ease-out';
-                    requestAnimationFrame(() => {
-                        el.style.transform = 'translateY(0)';
-                        el.style.opacity = '1';
-                    });
-                    setTimeout(() => {
-                        el.style.transition = '';
-                        el.style.transform = '';
-                        el.style.opacity = '';
-                        el.style.willChange = '';
-                        resolve();
-                    }, 560);
+        }
+        // Ensure overlays are top-level so backdrop-blur isn't clipped by transformed ancestors
+        (function moveModalsToBody() {
+            try {
+                const ids = ['loan-overlay', 'loan-journey-modal', 'survey-modal', 'chatlog-modal'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.parentElement !== document.body) {
+                        document.body.appendChild(el);
+                    }
                 });
-            }
-
-            function animateOutToBottom(el) {
-                return new Promise(resolve => {
-                    if (!el || el.classList.contains('hidden')) return resolve();
-                    el.style.willChange = 'transform, opacity';
+            } catch (e) { console.warn('modal move error', e); }
+        })();
+        // Toggle charts <-> live sessions view with slide-up arrival animation
+        function animateInFromBottom(el) {
+            return new Promise(resolve => {
+                if (!el) return resolve();
+                el.classList.remove('hidden');
+                el.style.willChange = 'transform, opacity';
+                el.style.transform = 'translateY(24px)';
+                el.style.opacity = '0';
+                el.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), opacity 420ms ease-out';
+                requestAnimationFrame(() => {
                     el.style.transform = 'translateY(0)';
                     el.style.opacity = '1';
-                    el.style.transition = 'transform 420ms cubic-bezier(.2,.8,.2,1), opacity 360ms ease-in';
-                    requestAnimationFrame(() => {
-                        el.style.transform = 'translateY(24px)';
-                        el.style.opacity = '0';
-                    });
-                    setTimeout(() => {
-                        el.classList.add('hidden');
-                        el.style.transition = '';
-                        el.style.transform = '';
-                        el.style.opacity = '';
-                        el.style.willChange = '';
-                        resolve();
-                    }, 460);
                 });
-            }
-
-            window.toggleAnalyticsView = async () => {
-                const charts = document.getElementById('loan-analytics-charts');
-                const live = document.getElementById('loan-analytics-live');
-                const btn = document.getElementById('analytics-mode-toggle');
-                if (!charts || !live || !btn) return;
-                const showingCharts = !charts.classList.contains('hidden');
-                if (showingCharts) {
-                    // charts -> out, live -> in
-                    animateOutToBottom(charts);
-                    await animateInFromBottom(live);
-                    btn.setAttribute('aria-pressed', 'true');
-                    btn.innerText = 'Show Charts';
-                    btn.classList.add('ring-4', 'ring-yellow-300', 'dark:ring-yellow-200');
-                } else {
-                    // live -> out, charts -> in
-                    animateOutToBottom(live);
-                    await animateInFromBottom(charts);
-                    btn.setAttribute('aria-pressed', 'false');
-                    btn.innerText = 'Show Live Sessions';
-                    btn.classList.remove('ring-4', 'ring-yellow-300', 'dark:ring-yellow-200');
-                }
-                // Resize charts after toggle so they render correctly
                 setTimeout(() => {
-                    try { if (loanCharts.funnel) loanCharts.funnel.resize(); } catch (e) { }
-                    try { if (loanCharts.productDonut) loanCharts.productDonut.resize(); } catch (e) { }
-                    try { if (loanCharts.sentimentPie) loanCharts.sentimentPie.resize(); } catch (e) { }
-                }, 600);
-            };
-            // Utilities
-            window.getInitials = (name) => {
-                if (!name) return '?';
-                const parts = name.split(' ');
-                return parts.length === 1 ? parts[0].substring(0, 2).toUpperCase() : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-            };
+                    el.style.transition = '';
+                    el.style.transform = '';
+                    el.style.opacity = '';
+                    el.style.willChange = '';
+                    resolve();
+                }, 560);
+            });
+        }
 
-            // Chat log modal helper (Chatbot User Analytics only)
-            window.showChatLog = (id) => {
-                const j = allJourneys.find(x => x.id === id);
-                if (!j) return;
-                const raw = j.raw || {};
-                const title = escapeHtml(raw.convo_title || j.convo_title || 'Conversation');
-                const summary = escapeHtml(raw.convo_summary || j.convo_summary || '');
-                const dateStr = formatReadableDate(raw.timestamp || j.timestamp || j.start || '');
-                const transcript = raw.full_transcript || raw.fullTranscript || raw.full_transcript_text || '';
-
-                const modal = document.getElementById('chatlog-modal');
-                const body = document.getElementById('chatlog-modal-body');
-                const heading = document.getElementById('chatlog-modal-title');
-                if (!modal || !body || !heading) return;
-                heading.innerText = `${title}${dateStr ? ' — ' + dateStr : ''}`;
-                body.innerHTML = '';
-                if (summary) body.innerHTML += `<div class="text-xs text-gray-500 mb-2">${summary}</div>`;
-                body.innerHTML += `<pre class="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-800 p-3 rounded max-h-[60vh] overflow-y-auto">${escapeHtml(transcript || 'No transcript available')}</pre>`;
-                openModal('chatlog-modal');
-            };
-
-            window.deleteUser = async (id) => {
-                const result = await Swal.fire({
-                    title: 'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#EE5D50', confirmButtonText: 'Yes'
+        function animateOutToBottom(el) {
+            return new Promise(resolve => {
+                if (!el || el.classList.contains('hidden')) return resolve();
+                el.style.willChange = 'transform, opacity';
+                el.style.transform = 'translateY(0)';
+                el.style.opacity = '1';
+                el.style.transition = 'transform 420ms cubic-bezier(.2,.8,.2,1), opacity 360ms ease-in';
+                requestAnimationFrame(() => {
+                    el.style.transform = 'translateY(24px)';
+                    el.style.opacity = '0';
                 });
-                if (result.isConfirmed) await deleteDoc(doc(db, "customers", id));
-            };
-            window.logout = () => {
-                document.getElementById('app-layout').classList.add('opacity-0');
-                setTimeout(() => location.reload(), 500);
-            };
+                setTimeout(() => {
+                    el.classList.add('hidden');
+                    el.style.transition = '';
+                    el.style.transform = '';
+                    el.style.opacity = '';
+                    el.style.willChange = '';
+                    resolve();
+                }, 460);
+            });
+        }
 
-            const closeKYCOverlay = () => closeModal('kyc-completion-overlay');
+        window.toggleAnalyticsView = async () => {
+            const charts = document.getElementById('loan-analytics-charts');
+            const live = document.getElementById('loan-analytics-live');
+            const btn = document.getElementById('analytics-mode-toggle');
+            if (!charts || !live || !btn) return;
+            const showingCharts = !charts.classList.contains('hidden');
+            if (showingCharts) {
+                // charts -> out, live -> in
+                animateOutToBottom(charts);
+                await animateInFromBottom(live);
+                btn.setAttribute('aria-pressed', 'true');
+                btn.innerText = 'Show Charts';
+                btn.classList.add('ring-4', 'ring-yellow-300', 'dark:ring-yellow-200');
+            } else {
+                // live -> out, charts -> in
+                animateOutToBottom(live);
+                await animateInFromBottom(charts);
+                btn.setAttribute('aria-pressed', 'false');
+                btn.innerText = 'Show Live Sessions';
+                btn.classList.remove('ring-4', 'ring-yellow-300', 'dark:ring-yellow-200');
+            }
+            // Resize charts after toggle so they render correctly
+            setTimeout(() => {
+                try { if (loanCharts.funnel) loanCharts.funnel.resize(); } catch (e) { }
+                try { if (loanCharts.productDonut) loanCharts.productDonut.resize(); } catch (e) { }
+                try { if (loanCharts.sentimentPie) loanCharts.sentimentPie.resize(); } catch (e) { }
+            }, 600);
+        };
+        // Utilities
+        window.getInitials = (name) => {
+            if (!name) return '?';
+            const parts = name.split(' ');
+            return parts.length === 1 ? parts[0].substring(0, 2).toUpperCase() : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        };
 
-            // Expose to window
-            window.navTo = navTo;
-            window.renderTable = renderTable;
-            window.processExcel = processExcel;
-            window.exportToCSV = exportToCSV;
-            window.editUser = editUser;
-            window.uploadFile = uploadFile;
-            window.saveUserChanges = saveUserChanges;
-            window.changePage = changePage;
+        // Chat log modal helper (Chatbot User Analytics only)
+        window.showChatLog = (id) => {
+            const j = allJourneys.find(x => x.id === id);
+            if (!j) return;
+            const raw = j.raw || {};
+            const title = escapeHtml(raw.convo_title || j.convo_title || 'Conversation');
+            const summary = escapeHtml(raw.convo_summary || j.convo_summary || '');
+            const dateStr = formatReadableDate(raw.timestamp || j.timestamp || j.start || '');
+            const transcript = raw.full_transcript || raw.fullTranscript || raw.full_transcript_text || '';
 
-            window.downloadYieldList = downloadYieldList;
-            window.closeYieldOverlay = closeYieldOverlay;
-            window.downloadPipList = downloadPipList;
-            window.closePipOverlay = closePipOverlay;
+            const modal = document.getElementById('chatlog-modal');
+            const body = document.getElementById('chatlog-modal-body');
+            const heading = document.getElementById('chatlog-modal-title');
+            if (!modal || !body || !heading) return;
+            heading.innerText = `${title}${dateStr ? ' — ' + dateStr : ''}`;
+            body.innerHTML = '';
+            if (summary) body.innerHTML += `<div class="text-xs text-gray-500 mb-2">${summary}</div>`;
+            body.innerHTML += `<pre class="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-800 p-3 rounded max-h-[60vh] overflow-y-auto">${escapeHtml(transcript || 'No transcript available')}</pre>`;
+            openModal('chatlog-modal');
+        };
 
-            window.downloadDailyList = downloadDailyList;
-            window.closeDailyOverlay = closeDailyOverlay;
-            window.downloadSubmissionList = downloadSubmissionList;
-            window.closeSubmissionOverlay = closeSubmissionOverlay;
-            window.toggleTheme = toggleTheme;
-            window.switchImportTab = switchImportTab;
-            window.addManualUser = addManualUser;
-            window.deleteFile = deleteFile;
-            window.updateFileName = updateFileName;
+        window.deleteUser = async (id) => {
+            const result = await Swal.fire({
+                title: 'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#EE5D50', confirmButtonText: 'Yes'
+            });
+            if (result.isConfirmed) await deleteDoc(doc(db, "customers", id));
+        };
+        window.logout = () => {
+            document.getElementById('app-layout').classList.add('opacity-0');
+            setTimeout(() => location.reload(), 500);
+        };
 
-            window.updateDailyChart = updateDailyChart;
-            window.updateSubmissionChart = updateSubmissionChart;
-            window.updateDocumentYieldChart = updateDocumentYieldChart;
-            window.downloadTrendsCSV = downloadTrendsCSV;
-            window.downloadStatusCSV = downloadStatusCSV;
-            window.downloadPipSummaryCSV = downloadPipSummaryCSV;
-            window.downloadDailySummaryCSV = downloadDailySummaryCSV;
-            window.downloadSubmissionSummaryCSV = downloadSubmissionSummaryCSV;
-            window.downloadDocumentYieldCSV = downloadDocumentYieldCSV;
+        const closeKYCOverlay = () => closeModal('kyc-completion-overlay');
 
-            window.processAdvancedBatch = processAdvancedBatch;
-            window.refreshAdvancedBI = refreshAdvancedBI;
-            window.exportAdvancedBI = exportAdvancedBI;
-            window.navToKYCFilter = navToKYCFilter;
-            window.downloadKYCCompletionCSV = downloadKYCCompletionCSV;
-            window.downloadKYCList = downloadKYCList;
-            window.closeKYCOverlay = closeKYCOverlay;
-            window.downloadUserDocs = downloadUserDocs;
-            window.downloadAllCustomersDocs = downloadAllCustomersDocs;
-            window.exportAnalyticsPDF = exportAnalyticsPDF;
-            window.updateDashboardTrends = updateDashboardTrends;
-            window.initLoanListener = initLoanListener;
-            window.downloadLoanLogsExcel = downloadLoanLogsExcel;
-            window.renderLoanTable = renderLoanTable;
-            window.updateLoanAnalytics = updateLoanAnalytics;
-            window.updateLoanCharts = updateLoanCharts;
-            window.showLoanOverlay = showLoanOverlay;
-            window.closeLoanOverlay = closeLoanOverlay;
-            window.showJourneyDetails = showJourneyDetails;
-            window.getStageBadgeClass = getStageBadgeClass;
+        // Expose to window
+        window.navTo = navTo;
+        window.renderTable = renderTable;
+        window.processExcel = processExcel;
+        window.exportToCSV = exportToCSV;
+        window.editUser = editUser;
+        window.uploadFile = uploadFile;
+        window.saveUserChanges = saveUserChanges;
+        window.changePage = changePage;
+
+        window.downloadYieldList = downloadYieldList;
+        window.closeYieldOverlay = closeYieldOverlay;
+        window.downloadPipList = downloadPipList;
+        window.closePipOverlay = closePipOverlay;
+
+        window.downloadDailyList = downloadDailyList;
+        window.closeDailyOverlay = closeDailyOverlay;
+        window.downloadSubmissionList = downloadSubmissionList;
+        window.closeSubmissionOverlay = closeSubmissionOverlay;
+        window.toggleTheme = toggleTheme;
+        window.switchImportTab = switchImportTab;
+        window.addManualUser = addManualUser;
+        window.deleteFile = deleteFile;
+        window.updateFileName = updateFileName;
+
+        window.updateDailyChart = updateDailyChart;
+        window.updateSubmissionChart = updateSubmissionChart;
+        window.updateDocumentYieldChart = updateDocumentYieldChart;
+        window.downloadTrendsCSV = downloadTrendsCSV;
+        window.downloadStatusCSV = downloadStatusCSV;
+        window.downloadPipSummaryCSV = downloadPipSummaryCSV;
+        window.downloadDailySummaryCSV = downloadDailySummaryCSV;
+        window.downloadSubmissionSummaryCSV = downloadSubmissionSummaryCSV;
+        window.downloadDocumentYieldCSV = downloadDocumentYieldCSV;
+
+        window.processAdvancedBatch = processAdvancedBatch;
+        window.refreshAdvancedBI = refreshAdvancedBI;
+        window.exportAdvancedBI = exportAdvancedBI;
+        window.navToKYCFilter = navToKYCFilter;
+        window.downloadKYCCompletionCSV = downloadKYCCompletionCSV;
+        window.downloadKYCList = downloadKYCList;
+        window.closeKYCOverlay = closeKYCOverlay;
+        window.downloadUserDocs = downloadUserDocs;
+        window.downloadAllCustomersDocs = downloadAllCustomersDocs;
+        window.exportAnalyticsPDF = exportAnalyticsPDF;
+        window.updateDashboardTrends = updateDashboardTrends;
+        window.initLoanListener = initLoanListener;
+        window.downloadLoanLogsExcel = downloadLoanLogsExcel;
+        window.renderLoanTable = renderLoanTable;
+        window.updateLoanAnalytics = updateLoanAnalytics;
+        window.updateLoanCharts = updateLoanCharts;
+        window.showLoanOverlay = showLoanOverlay;
+        window.closeLoanOverlay = closeLoanOverlay;
+        window.showJourneyDetails = showJourneyDetails;
+        window.getStageBadgeClass = getStageBadgeClass;
 
     </script>
 </body>
