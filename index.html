@@ -2174,7 +2174,7 @@
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, getBlob } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         // Initialize App
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -2458,27 +2458,52 @@
             downloadExcelHelper(`Yield_Funnel_${currentYieldBucket}.xlsx`, data);
         };
         // Helper: fetch a file blob robustly (direct → CORS proxy → XHR fallback)
+        /**
+         * Extract the Firebase Storage object path from a download URL.
+         * Firebase download URLs look like:
+         *   https://firebasestorage.googleapis.com/v0/b/<bucket>/o/<encoded-path>?alt=media&token=...
+         * Returns the decoded path string, or null if not a Firebase URL.
+         */
+        function extractFirebaseStoragePath(url) {
+            try {
+                const u = new URL(url);
+                // Must be a Firebase Storage URL
+                if (!u.hostname.includes('firebasestorage.googleapis.com') &&
+                    !u.hostname.includes('storage.googleapis.com')) return null;
+                // Path looks like: /v0/b/<bucket>/o/<encoded-object-path>
+                const match = u.pathname.match(/\/v0\/b\/[^/]+\/o\/(.+)/);
+                if (!match) return null;
+                return decodeURIComponent(match[1]);
+            } catch (_) {
+                return null;
+            }
+        }
+
         async function fetchFileBlob(url) {
-            // 1. Try direct fetch
+            // 1. BEST: Use Firebase Storage SDK getBlob() — bypasses CORS entirely.
+            //    This works because the SDK uses the authenticated Firebase channel,
+            //    not a raw browser fetch, so no CORS preflight is required.
+            const storagePath = extractFirebaseStoragePath(url);
+            if (storagePath) {
+                try {
+                    const fileRef = ref(storage, storagePath);
+                    const blob = await getBlob(fileRef);
+                    if (blob && blob.size > 0) return blob;
+                } catch (sdkErr) {
+                    console.warn('Firebase SDK getBlob failed, trying fetch fallback:', sdkErr.message);
+                }
+            }
+
+            // 2. Direct fetch (works when Firebase bucket CORS is configured).
             try {
-                const response = await fetch(url, { mode: 'cors' });
+                const response = await fetch(url, { mode: 'cors', cache: 'no-cache' });
                 if (response.ok) {
                     const blob = await response.blob();
                     if (blob.size > 0) return blob;
                 }
             } catch (_) { /* try next */ }
 
-            // 2. Try CORS proxy
-            try {
-                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-                const response = await fetch(proxyUrl);
-                if (response.ok) {
-                    const blob = await response.blob();
-                    if (blob.size > 0) return blob;
-                }
-            } catch (_) { /* try next */ }
-
-            // 3. XMLHttpRequest fallback (handles some environments that block fetch CORS)
+            // 3. XMLHttpRequest fallback
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open('GET', url, true);
