@@ -2490,6 +2490,20 @@
          * files may live in the old .appspot.com bucket while the admin app was
          * reconfigured to use the new .firebasestorage.app bucket).
          */
+        function normalizeFirebaseStorageUrl(url) {
+            try {
+                if (!url || typeof url !== 'string') return url;
+                const oldBucketPattern = /letshego-chatbot-demo(?:\.appspot\.com|\.firebasestorage\.app)/g;
+                const normalized = url.replace(oldBucketPattern, 'letshego-priority-kyc.firebasestorage.app');
+                if (normalized !== url) {
+                    console.warn('[Storage] Normalized old bucket URL to new bucket:', url, '=>', normalized);
+                }
+                return normalized;
+            } catch (_) {
+                return url;
+            }
+        }
+
         function extractFirebaseStorageInfo(url) {
             try {
                 const u = new URL(url);
@@ -2517,6 +2531,7 @@
         ];
 
         async function fetchFileBlob(url) {
+            url = normalizeFirebaseStorageUrl(url);
             // ── Strategy 1: Firebase SDK getBlob() ──────────────────────────────
             // Only applies to firebasestorage.googleapis.com URLs.
             // Uses the Firebase REST API with an anonymous auth token — bypasses
@@ -2598,11 +2613,11 @@
             if (!user) return;
 
             const docsToDownload = [
-                { url: user.omang_file_url, prefix: 'Omang' },
-                { url: user.payslip_url, prefix: 'Payslip' },
-                { url: user.utility_bill_url, prefix: 'Utility_Bill' },
-                { url: user.confirmation_letter_url, prefix: 'Confirmation_Letter' },
-                { url: user.affidavit_url, prefix: 'Affidavit' }
+                { url: normalizeFirebaseStorageUrl(user.omang_file_url), prefix: 'Omang' },
+                { url: normalizeFirebaseStorageUrl(user.payslip_url), prefix: 'Payslip' },
+                { url: normalizeFirebaseStorageUrl(user.utility_bill_url), prefix: 'Utility_Bill' },
+                { url: normalizeFirebaseStorageUrl(user.confirmation_letter_url), prefix: 'Confirmation_Letter' },
+                { url: normalizeFirebaseStorageUrl(user.affidavit_url), prefix: 'Affidavit' }
             ].filter(item => item.url && item.url.length > 5);
 
             if (docsToDownload.length === 0) {
@@ -2683,11 +2698,11 @@
                 id: c.id,
                 name: (c.full_name || c.id || 'Unknown').replace(/[^a-z0-9 _-]/gi, '_'),
                 docs: [
-                    { url: c.omang_file_url, prefix: 'Omang' },
-                    { url: c.payslip_url, prefix: 'Payslip' },
-                    { url: c.utility_bill_url, prefix: 'Utility_Bill' },
-                    { url: c.confirmation_letter_url, prefix: 'Confirmation_Letter' },
-                    { url: c.affidavit_url, prefix: 'Affidavit' }
+                    { url: normalizeFirebaseStorageUrl(c.omang_file_url), prefix: 'Omang' },
+                    { url: normalizeFirebaseStorageUrl(c.payslip_url), prefix: 'Payslip' },
+                    { url: normalizeFirebaseStorageUrl(c.utility_bill_url), prefix: 'Utility_Bill' },
+                    { url: normalizeFirebaseStorageUrl(c.confirmation_letter_url), prefix: 'Confirmation_Letter' },
+                    { url: normalizeFirebaseStorageUrl(c.affidavit_url), prefix: 'Affidavit' }
                 ].filter(d => d.url && d.url.length > 5)
             })).filter(c => c.docs.length > 0); // ← only customers with at least 1 file
 
