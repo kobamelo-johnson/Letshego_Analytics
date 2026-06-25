@@ -2175,10 +2175,30 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, getBlob } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         // Initialize App
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
+        const auth = getAuth(app);
+
+        // Pre-warm anonymous Firebase Auth so getBlob() has a valid ID token.
+        // This is required: without an auth token the Firebase Storage REST API
+        // will return 403 (if rules need auth) AND omit CORS headers,
+        // causing every browser fetch to fail with a CORS error.
+        let _anonAuthReady = null;
+        function ensureAnonAuth() {
+            if (!_anonAuthReady) {
+                _anonAuthReady = signInAnonymously(auth)
+                    .then(() => true)
+                    .catch(err => {
+                        console.warn('[Storage] Anonymous auth failed (non-fatal):', err.message);
+                        return false;
+                    });
+            }
+            return _anonAuthReady;
+        }
+        ensureAnonAuth(); // fire-and-forget warm-up
         // Global State
         let currentUserRole = 'admin'; // 'admin' or 'super_admin'
         let allCustomers = [];
@@ -2457,53 +2477,88 @@
             });
             downloadExcelHelper(`Yield_Funnel_${currentYieldBucket}.xlsx`, data);
         };
-        // Helper: fetch a file blob robustly (direct → CORS proxy → XHR fallback)
+        // ── Blob-fetch helpers ─────────────────────────────────────────────────────
         /**
-         * Extract the Firebase Storage object path from a download URL.
+         * Parse a Firebase Storage download URL and return both the bucket name
+         * and the decoded object path.
+         *
          * Firebase download URLs look like:
-         *   https://firebasestorage.googleapis.com/v0/b/<bucket>/o/<encoded-path>?alt=media&token=...
-         * Returns the decoded path string, or null if not a Firebase URL.
+         *   https://firebasestorage.googleapis.com/v0/b/<BUCKET>/o/<encoded-path>?alt=media&token=…
+         *
+         * The BUCKET in the URL is the authoritative source — it may differ from
+         * the default storage bucket configured in firebaseConfig (e.g. customer
+         * files may live in the old .appspot.com bucket while the admin app was
+         * reconfigured to use the new .firebasestorage.app bucket).
          */
-        function extractFirebaseStoragePath(url) {
+        function extractFirebaseStorageInfo(url) {
             try {
                 const u = new URL(url);
-                // Must be a Firebase Storage URL
-                if (!u.hostname.includes('firebasestorage.googleapis.com') &&
-                    !u.hostname.includes('storage.googleapis.com')) return null;
-                // Path looks like: /v0/b/<bucket>/o/<encoded-object-path>
-                const match = u.pathname.match(/\/v0\/b\/[^/]+\/o\/(.+)/);
-                if (!match) return null;
-                return decodeURIComponent(match[1]);
-            } catch (_) {
-                return null;
-            }
+                if (!u.hostname.includes('firebasestorage.googleapis.com')) return null;
+                // pathname: /v0/b/<bucket>/o/<encoded-object-path>
+                const m = u.pathname.match(/\/v0\/b\/([^/]+)\/o\/(.+)/);
+                if (!m) return null;
+                return {
+                    bucket: decodeURIComponent(m[1]),   // e.g. "letshego-priority-kyc.appspot.com"
+                    path: decodeURIComponent(m[2])    // e.g. "customers/ID123/omang.jpg"
+                };
+            } catch (_) { return null; }
         }
 
+        // CORS proxy list — tried in order when direct fetch fails.
+        // These work as server-side relay: they fetch the URL and return
+        // the file with Access-Control-Allow-Origin: * headers.
+        const CORS_PROXIES = [
+            u => `/.netlify/functions/proxy?url=${encodeURIComponent(u)}`, // 1. Netlify Production Proxy (Relative)
+            u => `https://letshego-admin.netlify.app/.netlify/functions/proxy?url=${encodeURIComponent(u)}`, // 2. Netlify Proxy (For GitHub Pages)
+            u => `http://127.0.0.1:8010/?url=${encodeURIComponent(u)}`,    // 3. Local Dev Proxy (node cors-proxy.js)
+            u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+            u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+        ];
+
         async function fetchFileBlob(url) {
-            // 1. BEST: Use Firebase Storage SDK getBlob() — bypasses CORS entirely.
-            //    This works because the SDK uses the authenticated Firebase channel,
-            //    not a raw browser fetch, so no CORS preflight is required.
-            const storagePath = extractFirebaseStoragePath(url);
-            if (storagePath) {
+            // ── Strategy 1: Firebase SDK getBlob() ──────────────────────────────
+            // Only applies to firebasestorage.googleapis.com URLs.
+            // Uses the Firebase REST API with an anonymous auth token — bypasses
+            // CORS for Firebase-hosted files regardless of gsutil CORS config.
+            const info = extractFirebaseStorageInfo(url);
+            if (info) {
                 try {
-                    const fileRef = ref(storage, storagePath);
+                    await ensureAnonAuth();
+                    const urlStorage = getStorage(app, `gs://${info.bucket}`);
+                    const fileRef = ref(urlStorage, info.path);
                     const blob = await getBlob(fileRef);
                     if (blob && blob.size > 0) return blob;
                 } catch (sdkErr) {
-                    console.warn('Firebase SDK getBlob failed, trying fetch fallback:', sdkErr.message);
+                    console.warn('[Storage] getBlob failed:', sdkErr.code, '|', sdkErr.message);
                 }
             }
 
-            // 2. Direct fetch (works when Firebase bucket CORS is configured).
+            // ── Strategy 2: Direct fetch (works when server sends CORS headers) ─
             try {
-                const response = await fetch(url, { mode: 'cors', cache: 'no-cache' });
-                if (response.ok) {
-                    const blob = await response.blob();
+                const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+                if (res.ok) {
+                    const blob = await res.blob();
                     if (blob.size > 0) return blob;
                 }
             } catch (_) { /* try next */ }
 
-            // 3. XMLHttpRequest fallback
+            // ── Strategies 3-5: CORS proxies ────────────────────────────────────
+            // Used for third-party URLs (e.g. AWS S3) where the bucket has no
+            // CORS policy. Each proxy relays the request server-side and returns
+            // the file body with Access-Control-Allow-Origin: * added.
+            for (const makeProxy of CORS_PROXIES) {
+                try {
+                    const proxyUrl = makeProxy(url);
+                    const res = await fetch(proxyUrl, { cache: 'no-cache' });
+                    if (res.ok) {
+                        const blob = await res.blob();
+                        if (blob.size > 0) return blob;
+                    }
+                } catch (_) { /* try next proxy */ }
+            }
+
+            // ── Final fallback: XHR ──────────────────────────────────────────────
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open('GET', url, true);
@@ -2512,7 +2567,7 @@
                     if (xhr.status === 200 && xhr.response && xhr.response.size > 0) {
                         resolve(xhr.response);
                     } else {
-                        reject(new Error(`XHR failed with status ${xhr.status}`));
+                        reject(new Error(`XHR status ${xhr.status}`));
                     }
                 };
                 xhr.onerror = () => reject(new Error('XHR network error'));
