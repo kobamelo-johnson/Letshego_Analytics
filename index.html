@@ -1039,6 +1039,7 @@
                             <i class="fas fa-file-pdf mr-2"></i> Export to PDF
                         </button>
                     </div>
+
                     <div id="analytics-pdf-area" class="space-y-6">
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div
@@ -1369,6 +1370,37 @@
                             </div>
                             <div class="flex-1 overflow-y-auto overflow-x-auto" id="kyc-list-container">
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW RISK CHART OVERLAY -->
+                    <div class="fixed inset-0 bg-black/40 backdrop-blur-md hidden flex-col items-center justify-center z-50 transition-all duration-300 p-4 opacity-0"
+                        id="risk-chart-overlay">
+                        <div
+                            class="bg-white dark:bg-night-card p-6 rounded-2xl shadow-2xl border border-gray-200 dark:border-night-border w-full max-w-3xl h-[80vh] flex flex-col transform transition-transform scale-95">
+                            <div
+                                class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-night-border pb-2">
+                                <div>
+                                    <h4 class="font-bold text-lg mb-1 text-dark dark:text-white"
+                                        id="risk-overlay-title">
+                                        Risk Rating Details</h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" id="risk-overlay-count">0 Users
+                                    </p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="downloadRiskList()"
+                                        class="px-3 py-2 rounded-lg bg-primary text-black hover:bg-yellow-400 hover:-translate-y-0.5 text-sm font-medium shadow-sm transition-all"
+                                        title="Download Excel">
+                                        <i class="fas fa-file-download sm:mr-1"></i> <span
+                                            class="hidden sm:inline">Excel</span>
+                                    </button>
+                                    <button onclick="closeRiskOverlay()" aria-label="Close" title="Close"
+                                        aria-label="Close" title="Close" aria-label="Close Overlay" title="Close"
+                                        class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-night-hover text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:rotate-90 text-sm transition-all"><i
+                                            class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            <div class="flex-1 overflow-y-auto overflow-x-auto" id="risk-list-container"></div>
                         </div>
                     </div>
 
@@ -2155,12 +2187,12 @@
 
         // 1. CONFIGURATION
         const firebaseConfig = {
-            apiKey: "AIzaSyCAH-tumQ2fIaGYmKr4s2oYFcc7_0fB1RQ",
-            authDomain: "letshego-priority-kyc.firebaseapp.com",
-            projectId: "letshego-priority-kyc",
-            storageBucket: "letshego-priority-kyc.firebasestorage.app",
-            messagingSenderId: "743962858388",
-            appId: "1:743962858388:web:c3b4141973ec279e2db581"
+            apiKey: "AIzaSyB5TyopvDwwMmIsLK7M4EkUvB_OBZvStl0",
+            authDomain: "letshego-lean-kyc.firebaseapp.com",
+            projectId: "letshego-lean-kyc",
+            storageBucket: "letshego-lean-kyc.firebasestorage.app",
+            messagingSenderId: "772036037415",
+            appId: "1:772036037415:web:c5b4aacfb082d677a3f702"
         };
 
         const ADMIN_AUTH = {
@@ -2173,14 +2205,27 @@
         };
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, getBlob } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        // Initialize App
+        // Initialize Primary App (lean-kyc)
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
+
+        // Secondary Firebase App (priority-kyc) — read-only for merging files
+        const secondaryConfig = {
+            apiKey: "AIzaSyCAH-tumQ2fIaGYmKr4s2oYFcc7_0fB1RQ",
+            authDomain: "letshego-priority-kyc.firebaseapp.com",
+            projectId: "letshego-priority-kyc",
+            storageBucket: "letshego-priority-kyc.firebasestorage.app",
+            messagingSenderId: "743962858388",
+            appId: "1:743962858388:web:c3b4141973ec279e2db581"
+        };
+        const secondaryApp = initializeApp(secondaryConfig, "secondary");
+        const secondaryDb = getFirestore(secondaryApp);
+        const secondaryStorage = getStorage(secondaryApp);
 
         // Pre-warm anonymous Firebase Auth so getBlob() has a valid ID token.
         // This is required: without an auth token the Firebase Storage REST API
@@ -2826,19 +2871,58 @@
                 for (let id in Chart.instances) { Chart.instances[id].update('none'); }
             });
         };
-        // 4. DATA LISTENER (REALTIME)
+        // 4. DATA LISTENER (REALTIME) — Merges files from both lean-kyc (primary) and priority-kyc (secondary)
+        const FILE_FIELDS = ['omang_file_url', 'payslip_url', 'utility_bill_url', 'confirmation_letter_url', 'affidavit_url'];
+        let _secondaryCache = {};  // Cache secondary DB docs to avoid re-fetching on every snapshot
+        let _secondaryLoaded = false;
+
+        async function loadSecondaryFiles() {
+            if (_secondaryLoaded) return _secondaryCache;
+            try {
+                const secSnapshot = await getDocs(collection(secondaryDb, "customers"));
+                secSnapshot.forEach(d => {
+                    _secondaryCache[d.id] = d.data();
+                });
+                _secondaryLoaded = true;
+                console.log(`[Secondary DB] Loaded ${Object.keys(_secondaryCache).length} customers from priority-kyc for file merging.`);
+            } catch (e) {
+                console.warn('[Secondary DB] Could not load priority-kyc files:', e.message);
+            }
+            return _secondaryCache;
+        }
+
         function initDataListener() {
-            const unsub = onSnapshot(collection(db, "customers"), (snapshot) => {
+            const unsub = onSnapshot(collection(db, "customers"), async (snapshot) => {
+                // Load secondary DB files (cached after first load)
+                const secMap = await loadSecondaryFiles();
+
                 allCustomers = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
+                snapshot.forEach(d => {
+                    const data = d.data();
+                    const secData = secMap[d.id] || {};
+
+                    // --- MERGE FILES: fill missing file URLs from secondary DB ---
+                    FILE_FIELDS.forEach(field => {
+                        if ((!data[field] || data[field].length <= 5) && secData[field] && secData[field].length > 5) {
+                            data[field] = secData[field];
+                        }
+                    });
+
+                    // --- MAPPING LOGIC ---
+                    let r = (data.risk_rating || '').toUpperCase();
+                    let p = (data.priority || '').toUpperCase();
+
+                    data.risk_rating = r;
+                    data.priority = p;
+                    // --- END MAPPING LOGIC ---
+
                     const kyc = calculateFileCount(data);
 
                     let displayPipStatus = data.pip_status || 'Not Set';
                     const lastActivity = data.last_activity || data.last_upload_date || data.created_at || '1970-01-01T00:00:00.000Z';
                     allCustomers.push({
-                        id: doc.id,
-                        omang: doc.id.replace('ID', ''),
+                        id: d.id,
+                        omang: d.id.replace('ID', ''),
                         ...data,
                         display_pip_status: displayPipStatus,
                         fileCount: kyc.total,
