@@ -1,12 +1,13 @@
 
+
         // 1. CONFIGURATION
         const firebaseConfig = {
-            apiKey: "AIzaSyCAH-tumQ2fIaGYmKr4s2oYFcc7_0fB1RQ",
-            authDomain: "letshego-priority-kyc.firebaseapp.com",
-            projectId: "letshego-priority-kyc",
-            storageBucket: "letshego-priority-kyc.firebasestorage.app",
-            messagingSenderId: "743962858388",
-            appId: "1:743962858388:web:c3b4141973ec279e2db581"
+            apiKey: "AIzaSyB5TyopvDwwMmIsLK7M4EkUvB_OBZvStl0",
+            authDomain: "letshego-lean-kyc.firebaseapp.com",
+            projectId: "letshego-lean-kyc",
+            storageBucket: "letshego-lean-kyc.firebasestorage.app",
+            messagingSenderId: "772036037415",
+            appId: "1:772036037415:web:c5b4aacfb082d677a3f702"
         };
 
         const ADMIN_AUTH = {
@@ -19,12 +20,45 @@
         };
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        // Initialize App
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, getBlob } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // Initialize Primary App (lean-kyc)
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
+        const auth = getAuth(app);
+
+        // Secondary Firebase App (priority-kyc) — read-only for merging files
+        const secondaryConfig = {
+            apiKey: "AIzaSyCAH-tumQ2fIaGYmKr4s2oYFcc7_0fB1RQ",
+            authDomain: "letshego-priority-kyc.firebaseapp.com",
+            projectId: "letshego-priority-kyc",
+            storageBucket: "letshego-priority-kyc.firebasestorage.app",
+            messagingSenderId: "743962858388",
+            appId: "1:743962858388:web:c3b4141973ec279e2db581"
+        };
+        const secondaryApp = initializeApp(secondaryConfig, "secondary");
+        const secondaryDb = getFirestore(secondaryApp);
+        const secondaryStorage = getStorage(secondaryApp);
+
+        // Pre-warm anonymous Firebase Auth so getBlob() has a valid ID token.
+        // This is required: without an auth token the Firebase Storage REST API
+        // will return 403 (if rules need auth) AND omit CORS headers,
+        // causing every browser fetch to fail with a CORS error.
+        let _anonAuthReady = null;
+        function ensureAnonAuth() {
+            if (!_anonAuthReady) {
+                _anonAuthReady = signInAnonymously(auth)
+                    .then(() => true)
+                    .catch(err => {
+                        console.warn('[Storage] Anonymous auth failed (non-fatal):', err.message);
+                        return false;
+                    });
+            }
+            return _anonAuthReady;
+        }
+        ensureAnonAuth(); // fire-and-forget warm-up
         // Global State
         let currentUserRole = 'admin'; // 'admin' or 'super_admin'
         let allCustomers = [];
@@ -124,10 +158,10 @@
         // 2. AUTHENTICATION & INIT
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const u = document.getElementById('username').value.trim();
+            const u = document.getElementById('username').value.trim().toLowerCase();
             const p = document.getElementById('password').value.trim();
-            if ((u === ADMIN_AUTH.username && p === ADMIN_AUTH.password) || (u === SUPER_ADMIN_AUTH.username && p === SUPER_ADMIN_AUTH.password)) {
-                currentUserRole = (u === SUPER_ADMIN_AUTH.username) ? 'super_admin' : 'admin';
+            if ((u === 'admin' && p === 'Letshego2026!') || (u === 'admin02' && p === 'Letshego2026@IDH')) {
+                currentUserRole = (u === 'admin02') ? 'super_admin' : 'admin';
                 const btn = e.target.querySelector('button');
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
 
@@ -141,7 +175,7 @@
                     const now = new Date();
                     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                     document.getElementById('current-header-date').innerText = now.toLocaleDateString('en-US', options);
-                    initDataListener();
+                    initDataListener(); initLoanListener();
 
                     // Super Admin Profile Visuals (gold avatar + diamond indicator)
                     if (currentUserRole === 'super_admin') {
@@ -152,6 +186,10 @@
                         nameEl.innerText = 'Super Admin';
                         statusEl.innerHTML = '<i class="fas fa-gem mr-1"></i>SUPER ADMIN';
                         statusEl.className = 'text-xs text-amber-500 font-medium';
+                        document.getElementById('super-admin-tools').classList.remove('hidden');
+                        const navBtnDeleteAll = document.getElementById('nav-btn-delete-all');
+                        if (navBtnDeleteAll) navBtnDeleteAll.classList.remove('hidden');
+                        if (window._showSuperAdminPortalTools) window._showSuperAdminPortalTools();
                     }
                 }, 800);
             } else {
@@ -226,7 +264,7 @@
             const stats = updateStats();
             const data = [
                 { Status: 'Pending', Count: stats.pending },
-                { Status: 'In Progress', Count: stats.total - stats.pending - stats.completed },
+                { Status: 'Incomplete', Count: stats.incomplete },
                 { Status: 'Completed', Count: stats.completed }
             ];
             downloadExcelHelper('Onboarding_Status_Distribution.xlsx', data);
@@ -299,16 +337,147 @@
             });
             downloadExcelHelper(`Yield_Funnel_${currentYieldBucket}.xlsx`, data);
         };
+        // ── Blob-fetch helpers ─────────────────────────────────────────────────────
+        /**
+         * Parse a Firebase Storage download URL and return both the bucket name
+         * and the decoded object path.
+         *
+         * Firebase download URLs look like:
+         *   https://firebasestorage.googleapis.com/v0/b/<BUCKET>/o/<encoded-path>?alt=media&token=…
+         *
+         * The BUCKET in the URL is the authoritative source — it may differ from
+         * the default storage bucket configured in firebaseConfig (e.g. customer
+         * files may live in the old .appspot.com bucket while the admin app was
+         * reconfigured to use the new .firebasestorage.app bucket).
+         */
+        function normalizeFirebaseStorageUrl(url) {
+            try {
+                if (!url || typeof url !== 'string') return url;
+                const oldBucketPattern = /letshego-chatbot-demo(?:\.appspot\.com|\.firebasestorage\.app)/g;
+                const normalized = url.replace(oldBucketPattern, 'letshego-priority-kyc.firebasestorage.app');
+                if (normalized !== url) {
+                    console.warn('[Storage] Normalized old bucket URL to new bucket:', url, '=>', normalized);
+                }
+                return normalized;
+            } catch (_) {
+                return url;
+            }
+        }
+
+        function extractFirebaseStorageInfo(url) {
+            try {
+                const u = new URL(url);
+                if (!u.hostname.includes('firebasestorage.googleapis.com')) return null;
+                // pathname: /v0/b/<bucket>/o/<encoded-object-path>
+                const m = u.pathname.match(/\/v0\/b\/([^/]+)\/o\/(.+)/);
+                if (!m) return null;
+                return {
+                    bucket: decodeURIComponent(m[1]),   // e.g. "letshego-priority-kyc.appspot.com"
+                    path: decodeURIComponent(m[2])    // e.g. "customers/ID123/omang.jpg"
+                };
+            } catch (_) { return null; }
+        }
+
+        // CORS proxy list — tried in order when direct fetch fails.
+        // These work as server-side relay: they fetch the URL and return
+        // the file with Access-Control-Allow-Origin: * headers.
+        const CORS_PROXIES = [
+            u => `/.netlify/functions/proxy?url=${encodeURIComponent(u)}`, // 1. Netlify Production Proxy (Relative)
+            u => `https://letshego-admin.netlify.app/.netlify/functions/proxy?url=${encodeURIComponent(u)}`, // 2. Netlify Proxy (For GitHub Pages)
+            u => `http://127.0.0.1:8010/?url=${encodeURIComponent(u)}`,    // 3. Local Dev Proxy (node cors-proxy.js)
+            u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+            u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+        ];
+
+        async function fetchFileBlob(url) {
+            url = normalizeFirebaseStorageUrl(url);
+            // ── Strategy 1: Firebase SDK getBlob() ──────────────────────────────
+            // Only applies to firebasestorage.googleapis.com URLs.
+            // Uses the Firebase REST API with an anonymous auth token — bypasses
+            // CORS for Firebase-hosted files regardless of gsutil CORS config.
+            const info = extractFirebaseStorageInfo(url);
+            if (info) {
+                try {
+                    await ensureAnonAuth();
+                    const urlStorage = getStorage(app, `gs://${info.bucket}`);
+                    const fileRef = ref(urlStorage, info.path);
+                    const blob = await getBlob(fileRef);
+                    if (blob && blob.size > 0) return blob;
+                } catch (sdkErr) {
+                    console.warn('[Storage] getBlob failed:', sdkErr.code, '|', sdkErr.message);
+                }
+            }
+
+            // ── Strategy 2: Direct fetch (works when server sends CORS headers) ─
+            try {
+                const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    if (blob.size > 0) return blob;
+                }
+            } catch (_) { /* try next */ }
+
+            // ── Strategies 3-5: CORS proxies ────────────────────────────────────
+            // Used for third-party URLs (e.g. AWS S3) where the bucket has no
+            // CORS policy. Each proxy relays the request server-side and returns
+            // the file body with Access-Control-Allow-Origin: * added.
+            for (const makeProxy of CORS_PROXIES) {
+                try {
+                    const proxyUrl = makeProxy(url);
+                    const res = await fetch(proxyUrl, { cache: 'no-cache' });
+                    if (res.ok) {
+                        const blob = await res.blob();
+                        if (blob.size > 0) return blob;
+                    }
+                } catch (_) { /* try next proxy */ }
+            }
+
+            // ── Final fallback: XHR ──────────────────────────────────────────────
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.responseType = 'blob';
+                xhr.onload = () => {
+                    if (xhr.status === 200 && xhr.response && xhr.response.size > 0) {
+                        resolve(xhr.response);
+                    } else {
+                        reject(new Error(`XHR status ${xhr.status}`));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('XHR network error'));
+                xhr.send();
+            });
+        }
+
+        // Helper: detect extension from blob type OR url
+        function detectExt(blob, url) {
+            if (blob.type === 'application/pdf' || blob.type === 'application/octet-stream') return '.pdf';
+            if (blob.type === 'image/jpeg') return '.jpg';
+            if (blob.type === 'image/png') return '.png';
+            if (blob.type === 'image/gif') return '.gif';
+            if (blob.type === 'image/webp') return '.webp';
+            // Fallback: sniff from URL
+            const urlLower = (url || '').toLowerCase().split('?')[0];
+            if (urlLower.endsWith('.pdf')) return '.pdf';
+            if (urlLower.endsWith('.jpg') || urlLower.endsWith('.jpeg')) return '.jpg';
+            if (urlLower.endsWith('.png')) return '.png';
+            // Firebase Storage paths often encode the extension in the path segment
+            const match = urlLower.match(/\.(pdf|jpg|jpeg|png|gif|webp|doc|docx)[&%]/);
+            if (match) return '.' + match[1].replace('jpeg', 'jpg');
+            return '.pdf'; // default assumption for KYC docs
+        }
+
         window.downloadUserDocs = async (id) => {
             const user = allCustomers.find(u => u.id === id);
             if (!user) return;
 
             const docsToDownload = [
-                { url: user.omang_file_url, prefix: 'Omang' },
-                { url: user.payslip_url, prefix: 'Payslip' },
-                { url: user.utility_bill_url, prefix: 'Utility_Bill' },
-                { url: user.confirmation_letter_url, prefix: 'Confirmation_Letter' },
-                { url: user.affidavit_url, prefix: 'Affidavit' }
+                { url: normalizeFirebaseStorageUrl(user.omang_file_url), prefix: 'Omang' },
+                { url: normalizeFirebaseStorageUrl(user.payslip_url), prefix: 'Payslip' },
+                { url: normalizeFirebaseStorageUrl(user.utility_bill_url), prefix: 'Utility_Bill' },
+                { url: normalizeFirebaseStorageUrl(user.confirmation_letter_url), prefix: 'Confirmation_Letter' },
+                { url: normalizeFirebaseStorageUrl(user.affidavit_url), prefix: 'Affidavit' }
             ].filter(item => item.url && item.url.length > 5);
 
             if (docsToDownload.length === 0) {
@@ -318,45 +487,33 @@
 
             Swal.fire({
                 title: 'Preparing ZIP Archive',
-                text: `Gathering and zipping ${docsToDownload.length} document(s). Please wait...`,
+                html: `Fetching <b>${docsToDownload.length}</b> document(s) for <b>${user.full_name || id}</b>. Please wait…`,
                 allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+                didOpen: () => Swal.showLoading()
             });
 
             try {
                 const zip = new JSZip();
+                let failed = 0;
 
-                await Promise.all(docsToDownload.map(async (doc) => {
-                    let response;
+                for (const docItem of docsToDownload) {
                     try {
-                        // Attempt direct fetch
-                        response = await fetch(doc.url);
-                        if (!response.ok) throw new Error("Direct fetch failed");
-                    } catch (err) {
-                        // If CORS blocks the request, fallback to a public CORS proxy
-                        console.warn(`Direct fetch failed for ${doc.prefix}. Trying CORS proxy...`);
-                        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(doc.url);
-                        response = await fetch(proxyUrl);
-                        if (!response.ok) throw new Error("Proxy fetch failed");
+                        const blob = await fetchFileBlob(docItem.url);
+                        const ext = detectExt(blob, docItem.url);
+                        zip.file(`${docItem.prefix}${ext}`, blob);
+                    } catch (e) {
+                        console.warn(`Could not fetch ${docItem.prefix}:`, e);
+                        failed++;
                     }
+                }
 
-                    const blob = await response.blob();
+                if (zip.files && Object.keys(zip.files).length === 0) {
+                    throw new Error('All files failed to download');
+                }
 
-                    let ext = '';
-                    if (blob.type === 'image/jpeg') ext = '.jpg';
-                    else if (blob.type === 'image/png') ext = '.png';
-                    else if (blob.type === 'application/pdf') ext = '.pdf';
-
-                    const filename = `${doc.prefix}${ext}`;
-                    zip.file(filename, blob);
-                }));
-
-                const content = await zip.generateAsync({ type: "blob" });
-
+                const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
                 const downloadUrl = URL.createObjectURL(content);
-                const a = document.createElement("a");
+                const a = document.createElement('a');
                 a.href = downloadUrl;
                 const safeUserName = (user.full_name || 'User').replace(/[^a-z0-9]/gi, '_').toLowerCase();
                 a.download = `Letshego_${safeUserName}_Documents.zip`;
@@ -366,30 +523,148 @@
                 URL.revokeObjectURL(downloadUrl);
 
                 Swal.close();
-                Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, icon: 'success', title: 'ZIP downloaded successfully!' });
+                if (failed > 0) {
+                    Swal.fire({ icon: 'warning', title: 'Partial Download', html: `ZIP created with <b>${docsToDownload.length - failed}</b> file(s). <b>${failed}</b> could not be fetched.` });
+                } else {
+                    Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, icon: 'success', title: 'ZIP downloaded successfully!' });
+                }
             } catch (error) {
-                console.error("ZIP creation failed completely:", error);
-
+                console.error('ZIP creation failed:', error);
                 Swal.fire({
-                    title: 'ZIP Error',
-                    text: 'Unable to bundle files due to network restrictions. Opening files sequentially.',
+                    title: 'Download Error',
+                    html: 'Could not bundle files. Opening them individually in new tabs instead.',
                     icon: 'warning'
-                });
-
-                // Final fallback if even the proxy fails 
-                docsToDownload.forEach((doc, index) => {
-                    setTimeout(() => {
-                        const a = document.createElement('a');
-                        a.href = doc.url;
-                        a.target = '_blank';
-                        a.download = doc.prefix;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    }, index * 1000);
+                }).then(() => {
+                    docsToDownload.forEach((docItem, index) => {
+                        setTimeout(() => {
+                            const a = document.createElement('a');
+                            a.href = docItem.url;
+                            a.target = '_blank';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        }, index * 800);
+                    });
                 });
             }
         };
+
+        /* ── Download ALL (filtered) customers' documents as one ZIP ──────── */
+        window.downloadAllCustomersDocs = async () => {
+            // Use FILTERED list so the download respects current table filters.
+            // Also skip any customer that has zero uploaded files.
+            const sourceList = filteredCustomers.length > 0 ? filteredCustomers : allCustomers;
+            const customersWithDocs = sourceList.map(c => ({
+                id: c.id,
+                name: (c.full_name || c.id || 'Unknown').replace(/[^a-z0-9 _-]/gi, '_'),
+                docs: [
+                    { url: normalizeFirebaseStorageUrl(c.omang_file_url), prefix: 'Omang' },
+                    { url: normalizeFirebaseStorageUrl(c.payslip_url), prefix: 'Payslip' },
+                    { url: normalizeFirebaseStorageUrl(c.utility_bill_url), prefix: 'Utility_Bill' },
+                    { url: normalizeFirebaseStorageUrl(c.confirmation_letter_url), prefix: 'Confirmation_Letter' },
+                    { url: normalizeFirebaseStorageUrl(c.affidavit_url), prefix: 'Affidavit' }
+                ].filter(d => d.url && d.url.length > 5)
+            })).filter(c => c.docs.length > 0); // ← only customers with at least 1 file
+
+            if (customersWithDocs.length === 0) {
+                Swal.fire('No Documents', 'No documents found in the current filtered list.', 'info');
+                return;
+            }
+
+            const totalFiles = customersWithDocs.reduce((s, c) => s + c.docs.length, 0);
+            const isFiltered = filteredCustomers.length > 0 && filteredCustomers.length !== allCustomers.length;
+
+            const confirm = await Swal.fire({
+                title: 'Download Files',
+                html: `This will bundle <b>${totalFiles} file(s)</b> from <b>${customersWithDocs.length} customer(s)</b>${isFiltered ? ' <span style="color:#FFD100">(current filter)</span>' : ''} into one ZIP archive.<br><small style="color:#888">Only customers with uploaded files are included.</small>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#FFD100',
+                confirmButtonText: '<i class="fas fa-cloud-download-alt"></i> Yes, Download',
+                cancelButtonText: 'Cancel'
+            });
+            if (!confirm.isConfirmed) return;
+
+            let processed = 0;
+            Swal.fire({
+                title: 'Preparing Archive…',
+                html: `<div id="swal-dl-progress">Fetching file 0 of ${totalFiles}…</div>
+                       <div class="w-full bg-gray-200 rounded-full h-2 mt-3"><div id="swal-dl-bar" class="bg-yellow-400 h-2 rounded-full transition-all" style="width:0%"></div></div>`,
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const updateProgress = (current, total, label) => {
+                const pct = Math.round((current / total) * 100);
+                const el = document.getElementById('swal-dl-progress');
+                const bar = document.getElementById('swal-dl-bar');
+                if (el) el.textContent = label || `Fetching file ${current} of ${total}…`;
+                if (bar) bar.style.width = pct + '%';
+            };
+
+            try {
+                const zip = new JSZip();
+                let failed = 0;
+
+                for (const customer of customersWithDocs) {
+                    const folderName = (customer.name.trim() || customer.id).substring(0, 60);
+                    const folder = zip.folder(folderName);
+
+                    for (const docItem of customer.docs) {
+                        processed++;
+                        updateProgress(processed, totalFiles, `Fetching ${docItem.prefix} for ${customer.name.trim()}…`);
+
+                        try {
+                            const blob = await fetchFileBlob(docItem.url);
+                            const ext = detectExt(blob, docItem.url);
+                            folder.file(`${docItem.prefix}${ext}`, blob);
+                        } catch (fetchErr) {
+                            console.warn(`Could not fetch ${docItem.prefix} for ${customer.name}:`, fetchErr);
+                            failed++;
+                        }
+                    }
+                }
+
+                updateProgress(totalFiles, totalFiles, 'Compressing archive…');
+                const content = await zip.generateAsync(
+                    { type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } },
+                    (metadata) => {
+                        const bar = document.getElementById('swal-dl-bar');
+                        const el = document.getElementById('swal-dl-progress');
+                        if (bar) bar.style.width = Math.round(metadata.percent) + '%';
+                        if (el) el.textContent = `Compressing… ${Math.round(metadata.percent)}%`;
+                    }
+                );
+
+                const now = new Date().toISOString().slice(0, 10);
+                const downloadUrl = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `Letshego_KYC_Documents_${now}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+
+                Swal.close();
+                Swal.fire({
+                    icon: failed > 0 ? 'warning' : 'success',
+                    title: 'Download Complete',
+                    html: failed > 0
+                        ? `ZIP created with <b>${totalFiles - failed}</b> file(s). <b>${failed}</b> could not be fetched (network/CORS restriction).`
+                        : `All <b>${totalFiles}</b> document(s) from <b>${customersWithDocs.length}</b> customer(s) downloaded successfully!`,
+                    toast: failed === 0,
+                    position: failed === 0 ? 'top-end' : 'center',
+                    showConfirmButton: failed > 0,
+                    timer: failed === 0 ? 4000 : undefined
+                });
+            } catch (err) {
+                console.error('Download All Files failed:', err);
+                Swal.fire('Error', 'An unexpected error occurred while creating the archive. Please try again.', 'error');
+            }
+        };
+
         window.exportAnalyticsPDF = () => {
             const element = document.getElementById('analytics-pdf-area');
 
@@ -411,19 +686,58 @@
                 for (let id in Chart.instances) { Chart.instances[id].update('none'); }
             });
         };
-        // 4. DATA LISTENER (REALTIME)
+        // 4. DATA LISTENER (REALTIME) — Merges files from both lean-kyc (primary) and priority-kyc (secondary)
+        const FILE_FIELDS = ['omang_file_url', 'payslip_url', 'utility_bill_url', 'confirmation_letter_url', 'affidavit_url'];
+        let _secondaryCache = {};  // Cache secondary DB docs to avoid re-fetching on every snapshot
+        let _secondaryLoaded = false;
+
+        async function loadSecondaryFiles() {
+            if (_secondaryLoaded) return _secondaryCache;
+            try {
+                const secSnapshot = await getDocs(collection(secondaryDb, "customers"));
+                secSnapshot.forEach(d => {
+                    _secondaryCache[d.id] = d.data();
+                });
+                _secondaryLoaded = true;
+                console.log(`[Secondary DB] Loaded ${Object.keys(_secondaryCache).length} customers from priority-kyc for file merging.`);
+            } catch (e) {
+                console.warn('[Secondary DB] Could not load priority-kyc files:', e.message);
+            }
+            return _secondaryCache;
+        }
+
         function initDataListener() {
-            const unsub = onSnapshot(collection(db, "customers"), (snapshot) => {
+            const unsub = onSnapshot(collection(db, "customers"), async (snapshot) => {
+                // Load secondary DB files (cached after first load)
+                const secMap = await loadSecondaryFiles();
+
                 allCustomers = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
+                snapshot.forEach(d => {
+                    const data = d.data();
+                    const secData = secMap[d.id] || {};
+
+                    // --- MERGE FILES: fill missing file URLs from secondary DB ---
+                    FILE_FIELDS.forEach(field => {
+                        if ((!data[field] || data[field].length <= 5) && secData[field] && secData[field].length > 5) {
+                            data[field] = secData[field];
+                        }
+                    });
+
+                    // --- MAPPING LOGIC ---
+                    let r = (data.risk_rating || '').toUpperCase();
+                    let p = (data.priority || '').toUpperCase();
+
+                    data.risk_rating = r;
+                    data.priority = p;
+                    // --- END MAPPING LOGIC ---
+
                     const kyc = calculateFileCount(data);
 
                     let displayPipStatus = data.pip_status || 'Not Set';
                     const lastActivity = data.last_activity || data.last_upload_date || data.created_at || '1970-01-01T00:00:00.000Z';
                     allCustomers.push({
-                        id: doc.id,
-                        omang: doc.id.replace('ID', ''),
+                        id: d.id,
+                        omang: d.id.replace('ID', ''),
                         ...data,
                         display_pip_status: displayPipStatus,
                         fileCount: kyc.total,
@@ -478,9 +792,13 @@
                 'dashboard': 'Dashboard Overview',
                 'users': 'User Management',
                 'analytics': 'Analytics & Reports',
+                'loan-analytics': 'Chatbot User Analytics',
                 'advanced': 'Advanced BI Playground'
             };
             document.getElementById('page-title').innerText = titles[page];
+            if (page === 'loan-analytics') {
+                setTimeout(() => { try { updateLoanAnalytics(); renderLoanTable(); } catch (e) { } }, 120);
+            }
             if (page === 'advanced') {
                 setTimeout(refreshAdvancedBI, 100);
             }
@@ -534,7 +852,19 @@
             }
             paginatedCustomers.forEach(c => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 dark:hover:bg-night-hover transition-colors group border-b border-gray-50 dark:border-night-border hover:-translate-y-[1px]";
+                let extraClass = "hover:bg-gray-50 dark:hover:bg-night-hover transition-colors group border-b border-gray-50 dark:border-night-border hover:-translate-y-[1px]";
+
+                if (window.isSelectDeleteMode) {
+                    extraClass += " cursor-pointer";
+                    tr.onclick = (e) => {
+                        if (e.target.closest('button')) return;
+                        toggleSelectUser(c.id, tr);
+                    };
+                    if (window.selectedUsersForDeletion.has(c.id)) {
+                        extraClass += " !bg-yellow-100 dark:!bg-yellow-900/50 border-l-4 !border-l-primary !border-b-yellow-200 dark:!border-b-yellow-900/60 opacity-100 font-medium";
+                    }
+                }
+                tr.className = extraClass;
 
                 let statusBadge = '';
                 const currentKYC = c.kycStatus;
@@ -575,10 +905,10 @@
                 }
 
                 let riskBadge = '';
-                if (c.risk_rating === 'HIGH') riskBadge = `<span class="bg-red-100 dark:bg-red-900/40 text-danger border border-red-200 dark:border-red-800 px-2 py-1 rounded text-[10px] font-bold shadow-sm">${c.risk_rating}</span>`;
-                else if (c.risk_rating === 'MEDIUM') riskBadge = `<span class="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 border border-yellow-200 dark:border-yellow-800 px-2 py-1 rounded text-[10px] font-bold shadow-sm">${c.risk_rating}</span>`;
-                else if (c.risk_rating === 'LOW') riskBadge = `<span class="bg-green-100 dark:bg-green-900/40 text-success border border-green-200 dark:border-green-800 px-2 py-1 rounded text-[10px] font-bold shadow-sm">${c.risk_rating}</span>`;
-                else riskBadge = `<span class="bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-1 rounded text-[10px] font-bold shadow-sm">${c.risk_rating || 'N/A'}</span>`;
+                if (c.risk_rating === 'HIGH') riskBadge = `<span class="bg-red-100 dark:bg-[#4A1010] text-danger dark:text-red-400 border border-red-200 dark:border-red-900/50 px-2 py-1 rounded text-[10px] font-bold shadow-sm">${c.risk_rating}</span>`;
+                else if (c.risk_rating === 'MEDIUM') riskBadge = `<span class="bg-yellow-100 dark:bg-[#4D3800] text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50 px-2 py-1 rounded text-[10px] font-bold shadow-sm">${c.risk_rating}</span>`;
+                else if (c.risk_rating === 'LOW') riskBadge = `<span class="bg-green-100 dark:bg-[#0B3D1B] text-success dark:text-[#05CD99] border border-green-200 dark:border-green-900/50 px-2 py-1 rounded text-[10px] font-bold shadow-sm">${c.risk_rating}</span>`;
+                else riskBadge = `<span class="bg-gray-100 dark:bg-night-input text-gray-500 dark:text-night-muted border border-transparent dark:border-night-border px-2 py-1 rounded text-[10px] font-bold shadow-sm">${c.risk_rating || 'N/A'}</span>`;
 
                 tr.innerHTML = `
                     <td class="p-4">
@@ -591,7 +921,11 @@
                     </td>
                     <td class="p-4 text-sm text-gray-500 dark:text-gray-400 font-mono">${c.omang}</td>
                     <td class="p-4">${riskBadge}</td>
-                    <td class="p-4 text-sm font-medium text-gray-700 dark:text-gray-300">${c.priority || 'N/A'}</td>
+                    <td class="p-4 text-sm font-medium">
+                        <span class="${(c.priority || 'N/A').toUpperCase() === 'HIGH' ? 'text-red-500 font-bold' : (c.priority || 'N/A').toUpperCase() === 'MEDIUM' ? 'text-orange-500 font-bold' : (c.priority || 'N/A').toUpperCase() === 'LOW' ? 'text-green-500 font-bold' : 'text-gray-700 dark:text-gray-300'}">
+                            ${c.priority || 'N/A'}
+                        </span>
+                    </td>
                     <td class="p-4">${pipBadge}</td>
                     <td class="p-4 min-w-[150px]">${vaultHTML}</td>
                     <td class="p-4">${statusBadge}</td>
@@ -693,6 +1027,9 @@
             document.getElementById('edit-payout').value = user.payout_date || '';
             document.getElementById('edit-years').value = user.years_since_payout || '';
 
+            document.getElementById('edit-risk-rating').value = user.risk_rating || 'N/A';
+            document.getElementById('edit-priority').value = user.priority || 'N/A';
+
             // SUPER ADMIN CHECK
             if (currentUserRole === 'super_admin') {
                 document.getElementById('super-admin-kyc-override').classList.remove('hidden');
@@ -784,6 +1121,8 @@
             const newContact = document.getElementById('edit-contact').value;
             const newPayout = document.getElementById('edit-payout').value;
             const newYears = document.getElementById('edit-years').value;
+            const newRiskRating = document.getElementById('edit-risk-rating').value;
+            const newPriority = document.getElementById('edit-priority').value;
 
             const updates = {
                 full_name: newName,
@@ -792,6 +1131,8 @@
                 contact_details: newContact,
                 payout_date: newPayout,
                 years_since_payout: newYears,
+                risk_rating: newRiskRating,
+                priority: newPriority,
                 last_activity: new Date().toISOString(),
                 last_action: 'Profile Updated'
             };
@@ -836,10 +1177,10 @@
             reader.onload = async (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
+                    const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
-                    const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false });
 
                     const batchPromises = [];
                     const duplicateIDs = [];
@@ -899,9 +1240,309 @@
                         Swal.fire('Error', 'Failed to import. Check console.', 'error');
                         console.error(e);
                     }
+                } catch (err) {
+                    console.error(err);
                 }
-            });
+            };
+            reader.readAsArrayBuffer(file);
         };
+        window.isSelectDeleteMode = false;
+        window.selectedUsersForDeletion = new Set();
+
+        /* ── Build the portal dropdown menu (injected into <body>) ────────── */
+        (function buildPortal() {
+            const isDark = () => document.documentElement.classList.contains('dark');
+
+            const portal = document.createElement('div');
+            portal.id = 'action-dd-portal';
+            portal.innerHTML = `
+                <div style="padding:8px;">
+                    <button class="dd-opt selected" id="ddp-export-excel" onclick="selectDropdownAction('export-excel')">
+                        <span class="dd-opt-icon" style="background:rgba(255,209,0,0.15);color:#b38a00;">
+                            <i class="fas fa-file-excel"></i>
+                        </span>
+                        <div>
+                            <div class="dd-opt-title">Export Excel</div>
+                            <div class="dd-opt-sub">Download filtered list as .xlsx</div>
+                        </div>
+                        <i class="fas fa-check dd-tick"></i>
+                    </button>
+
+                    <button class="dd-opt" id="ddp-download-all" onclick="selectDropdownAction('download-all')">
+                        <span class="dd-opt-icon" style="background:rgba(59,130,246,0.12);color:#2563eb;">
+                            <i class="fas fa-cloud-download-alt"></i>
+                        </span>
+                        <div>
+                            <div class="dd-opt-title">Download All Files</div>
+                            <div class="dd-opt-sub">ZIP of filtered customers' docs</div>
+                        </div>
+                        <i class="fas fa-check dd-tick"></i>
+                    </button>
+
+                    <button class="dd-opt" id="ddp-import" onclick="selectDropdownAction('import')">
+                        <span class="dd-opt-icon" style="background:rgba(34,197,94,0.12);color:#16a34a;">
+                            <i class="fas fa-file-import"></i>
+                        </span>
+                        <div>
+                            <div class="dd-opt-title">Import / Add</div>
+                            <div class="dd-opt-sub">Upload Excel or add a customer</div>
+                        </div>
+                        <i class="fas fa-check dd-tick"></i>
+                    </button>
+
+                    <div id="ddp-super-tools" style="display:none;">
+                        <div class="dd-sep"></div>
+                        <button class="dd-opt" id="ddp-select" onclick="selectDropdownAction('select')">
+                            <span class="dd-opt-icon" style="background:rgba(249,115,22,0.12);color:#ea580c;">
+                                <i class="fas fa-check-square"></i>
+                            </span>
+                            <div>
+                                <div class="dd-opt-title" id="ddp-select-label">Selection Mode</div>
+                                <div class="dd-opt-sub">Select rows for bulk delete</div>
+                            </div>
+                            <i class="fas fa-check dd-tick"></i>
+                        </button>
+
+                        <button id="btn-delete-selected" onclick="executeDeleteSelected()"
+                            style="display:none;gap:12px;padding:10px 12px;cursor:pointer;border-radius:10px;border:1.5px solid #fca5a5;background:rgba(239,68,68,0.07);width:100%;text-align:left;color:#dc2626;align-items:center;margin-top:4px;">
+                            <span class="dd-opt-icon" style="background:rgba(239,68,68,0.12);color:#dc2626;width:34px;height:34px;">
+                                <i class="fas fa-trash-alt"></i>
+                            </span>
+                            <div>
+                                <div class="dd-opt-title" style="color:#dc2626;">Delete Selected (<span id="delete-count">0</span>)</div>
+                                <div class="dd-opt-sub">Permanently remove chosen rows</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>`;
+            document.body.appendChild(portal);
+        })();
+
+        /* ── Position & toggle the portal ───────────────────────────────── */
+        window._lastDdAction = 'export-excel';
+        window._ddOpen = false;
+
+        window.toggleActionDropdown = () => {
+            const portal = document.getElementById('action-dd-portal');
+            const chevron = document.getElementById('action-dropdown-chevron');
+            const trigger = document.getElementById('action-chevron-btn');
+
+            window._ddOpen = !window._ddOpen;
+
+            if (window._ddOpen) {
+                // Apply dark mode class
+                const isDark = document.documentElement.classList.contains('dark');
+                portal.classList.toggle('dark-mode', isDark);
+
+                // Compute position from trigger button bounding rect
+                const rect = trigger.getBoundingClientRect();
+                const menuW = 280;
+                const margin = 8;
+
+                // Prefer aligning right edge to trigger right edge
+                let left = rect.right - menuW;
+                if (left < margin) left = margin;
+                if (left + menuW > window.innerWidth - margin) left = window.innerWidth - menuW - margin;
+
+                // Show below trigger; if not enough room below, show above
+                const spaceBelow = window.innerHeight - rect.bottom - margin;
+                const approxH = 250; // rough portal height
+                let top;
+                if (spaceBelow >= approxH || spaceBelow > window.innerHeight / 2) {
+                    top = rect.bottom + 6;
+                } else {
+                    // position above
+                    top = rect.top - approxH - 6;
+                    if (top < margin) top = margin;
+                }
+
+                portal.style.left = left + 'px';
+                portal.style.top = top + 'px';
+                portal.style.display = 'block';
+                // Reset animation
+                portal.style.animation = 'none';
+                requestAnimationFrame(() => { portal.style.animation = ''; });
+            } else {
+                portal.style.display = 'none';
+            }
+
+            if (chevron) chevron.style.transform = window._ddOpen ? 'rotate(180deg)' : '';
+        };
+
+        // Close portal on outside click
+        document.addEventListener('click', (e) => {
+            const portal = document.getElementById('action-dd-portal');
+            const wrapper = document.getElementById('action-dropdown-wrapper');
+            if (!portal || !wrapper) return;
+            if (!portal.contains(e.target) && !wrapper.contains(e.target)) {
+                portal.style.display = 'none';
+                const chevron = document.getElementById('action-dropdown-chevron');
+                if (chevron) chevron.style.transform = '';
+                window._ddOpen = false;
+            }
+        });
+
+        // Close on scroll/resize so it doesn't drift
+        ['scroll', 'resize'].forEach(ev => window.addEventListener(ev, () => {
+            if (window._ddOpen) {
+                document.getElementById('action-dd-portal').style.display = 'none';
+                const chevron = document.getElementById('action-dropdown-chevron');
+                if (chevron) chevron.style.transform = '';
+                window._ddOpen = false;
+            }
+        }, { passive: true }));
+
+        /* ── Select an action ───────────────────────────────────────────── */
+        const _ddCfg = {
+            'export-excel': { icon: 'fas fa-file-excel', label: 'Export Excel', portalId: 'ddp-export-excel', run: () => exportToCSV() },
+            'download-all': { icon: 'fas fa-cloud-download-alt', label: 'Download All Files', portalId: 'ddp-download-all', run: () => downloadAllCustomersDocs() },
+            'import': { icon: 'fas fa-file-import', label: 'Import / Add', portalId: 'ddp-import', run: () => openModal('bulkModal') },
+            'select': { icon: 'fas fa-check-square', label: 'Selection Mode', portalId: 'ddp-select', run: () => toggleSelectionDeleteMode() }
+        };
+
+        window.selectDropdownAction = (action, silent = false) => {
+            const c = _ddCfg[action] || _ddCfg['export-excel'];
+
+            // Deselect all portal options
+            document.querySelectorAll('#action-dd-portal .dd-opt').forEach(b => b.classList.remove('selected'));
+            // Select chosen
+            const chosen = document.getElementById(c.portalId);
+            if (chosen) chosen.classList.add('selected');
+
+            // Update split-button label
+            document.getElementById('action-dropdown-icon').className = c.icon;
+            document.getElementById('action-dropdown-label').textContent = c.label;
+
+            window._lastDdAction = action;
+
+            // Close portal
+            const portal = document.getElementById('action-dd-portal');
+            const chevron = document.getElementById('action-dropdown-chevron');
+            if (portal) portal.style.display = 'none';
+            if (chevron) chevron.style.transform = '';
+            window._ddOpen = false;
+
+            if (!silent) c.run();
+        };
+
+        /* ── Execute whatever is currently selected (left-button click) ── */
+        window.executeCurrentDropdownAction = () => {
+            const c = _ddCfg[window._lastDdAction] || _ddCfg['export-excel'];
+            c.run();
+        };
+
+        /* ── Selection-delete mode toggle ───────────────────────────────── */
+        window.toggleSelectionDeleteMode = () => {
+            window.isSelectDeleteMode = !window.isSelectDeleteMode;
+            window.selectedUsersForDeletion.clear();
+
+            // Show / hide delete button inside portal
+            const delBtn = document.getElementById('btn-delete-selected');
+            if (delBtn) delBtn.style.display = window.isSelectDeleteMode ? 'flex' : 'none';
+
+            // Update portal select label
+            const lbl = document.getElementById('ddp-select-label');
+            if (lbl) lbl.textContent = window.isSelectDeleteMode ? 'Selection Mode (ON)' : 'Selection Mode';
+
+            // Sync split-button label
+            if (window.isSelectDeleteMode) {
+                document.getElementById('action-dropdown-icon').className = 'fas fa-check-square';
+                document.getElementById('action-dropdown-label').textContent = 'Selection Mode';
+            } else {
+                const c = _ddCfg[window._lastDdAction] || _ddCfg['export-excel'];
+                document.getElementById('action-dropdown-icon').className = c.icon;
+                document.getElementById('action-dropdown-label').textContent = c.label;
+            }
+
+            document.getElementById('delete-count').innerText = '0';
+            renderTable();
+        };
+
+        /* ── Show super-admin tools in portal when role is super_admin ── */
+        window._showSuperAdminPortalTools = () => {
+            const el = document.getElementById('ddp-super-tools');
+            if (el) el.style.display = 'block';
+            // also show old wrapper for compat
+            const st = document.getElementById('super-admin-tools');
+            if (st) st.classList.remove('hidden');
+        };
+
+        // Init default highlight
+        window.selectDropdownAction('export-excel', true);
+
+        window.toggleSelectUser = (id, trElement) => {
+            if (!window.isSelectDeleteMode) return;
+            if (window.selectedUsersForDeletion.has(id)) {
+                window.selectedUsersForDeletion.delete(id);
+                if (trElement) {
+                    trElement.classList.remove("!bg-yellow-100", "dark:!bg-yellow-900/50", "border-l-4", "!border-l-primary", "!border-b-yellow-200", "dark:!border-b-yellow-900/60", "opacity-100", "font-medium");
+                }
+            } else {
+                window.selectedUsersForDeletion.add(id);
+                if (trElement) {
+                    trElement.classList.add("!bg-yellow-100", "dark:!bg-yellow-900/50", "border-l-4", "!border-l-primary", "!border-b-yellow-200", "dark:!border-b-yellow-900/60", "opacity-100", "font-medium");
+                }
+            }
+            document.getElementById('delete-count').innerText = window.selectedUsersForDeletion.size;
+        };
+
+
+
+        window.executeDeleteSelected = async () => {
+            if (window.selectedUsersForDeletion.size === 0) { Swal.fire('Info', 'No users selected.', 'info'); return; }
+            const result = await Swal.fire({
+                title: 'Delete Selected?',
+                html: `Are you sure you want to permanently delete <b>${window.selectedUsersForDeletion.size}</b> selected records?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EE5D50',
+                confirmButtonText: 'Yes, Delete All'
+            });
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'Deleting...', text: 'Please wait.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const promises = Array.from(window.selectedUsersForDeletion).map(id => deleteDoc(doc(db, "customers", id)));
+                    await Promise.all(promises);
+                    window.selectedUsersForDeletion.clear();
+                    document.getElementById('delete-count').innerText = '0';
+                    // Keep mode open, or close it:
+                    // toggleSelectionDeleteMode();
+                    renderTable();
+                    updateCharts();
+                    Swal.fire('Success', 'Selected records deleted successfully.', 'success');
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Error', 'Batch deletion failed.', 'error');
+                }
+            }
+        };
+
+        window.executeDeleteAll = async () => {
+            if (filteredCustomers.length === 0) { Swal.fire('Info', 'List is already empty.', 'info'); return; }
+            const result = await Swal.fire({
+                title: 'Mass Deletion Warning',
+                html: `Are you sure you want to permanently delete ALL <b>${filteredCustomers.length}</b> listed records from the active filters?`,
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#EE5D50',
+                confirmButtonText: 'I am certain, delete list'
+            });
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'Deleting List...', text: 'Please wait.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const promises = filteredCustomers.map(c => deleteDoc(doc(db, "customers", c.id)));
+                    await Promise.all(promises);
+                    if (window.isSelectDeleteMode) toggleSelectionDeleteMode();
+                    renderTable();
+                    updateCharts();
+                    Swal.fire('Success', 'The filtered list has been eradicated.', 'success');
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Error', 'List deletion failed.', 'error');
+                }
+            }
+        };
+
         window.addManualUser = async () => {
             const name = document.getElementById('manual-name').value.trim();
             const omang = document.getElementById('manual-omang').value.trim();
@@ -992,10 +1633,10 @@
 
         function updateStats() {
             const total = allCustomers.length;
-            const pending = total - allCustomers.filter(c => c.kycStatus === 'complete').length;
             const completed = allCustomers.filter(c => c.kycStatus === 'complete').length;
-            const pipIssues = allCustomers.filter(c => c.display_pip_status && c.display_pip_status !== 'Not Set' && c.display_pip_status !== 'None').length;
             const incomplete = allCustomers.filter(c => c.kycStatus === 'incomplete' || (c.lastStep && c.kycStatus !== 'complete')).length;
+            const pending = total - completed - incomplete;
+            const pipIssues = allCustomers.filter(c => c.display_pip_status && c.display_pip_status !== 'Not Set' && c.display_pip_status !== 'None').length;
             document.getElementById("stat-total").innerText = total.toLocaleString();
             document.getElementById("stat-pending").innerText = pending.toLocaleString();
             document.getElementById("stat-completed").innerText = completed.toLocaleString();
@@ -1040,9 +1681,9 @@
             charts.statusPie = new Chart(document.getElementById('chart-status-pie'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pending', 'In Progress', 'Completed'],
+                    labels: ['Pending', 'Incomplete', 'Completed'],
                     datasets: [{
-                        data: [stats.pending, stats.total - stats.pending - stats.completed, stats.completed],
+                        data: [stats.pending, stats.incomplete, stats.completed],
                         backgroundColor: ['#E2E8F0', '#F6AD55', '#05CD99'], borderWidth: 0
                     }]
                 },
@@ -2109,11 +2750,806 @@
             XLSX.writeFile(workbook, `Journey_Report_${batch.name.replace(/\s+/g, '_')}.xlsx`);
             Swal.close();
         };
+        // Loan Analytics JS
+        let allJourneys = [];
+        let loanCharts = {};
+
+        function formatDurationReadable(seconds) {
+            seconds = Number(seconds) || 0;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}m ${s}s`;
+        }
+
+        function isTerminalStage(stage) {
+            if (!stage) return false;
+            const s = stage.toString().toLowerCase();
+            return /(agent|requested|completed|success|submitted|end|closed|appl|applied)/.test(s);
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.toString().replace(/[&<>"'`=\/]/g, function (s) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;' }[s]);
+            });
+        }
+
+        function mapProductName(p) {
+            const s = (p || '').toString().toLowerCase();
+            if (s.includes('housing')) return 'Housing Loan';
+            if (s.includes('personal')) return 'Personal Loan';
+            if (s.includes('business') || s.includes('bussiness')) return 'Business Loan';
+            return p || 'Other';
+        }
+
+        function updateLoanFilters(stageArray) {
+            const sel = document.getElementById('loan-terminal-filter');
+            if (!sel) return;
+            const current = sel.value || 'all';
+            sel.innerHTML = '<option value="all">All Stages</option>';
+            stageArray.sort().forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                sel.appendChild(opt);
+            });
+            if (stageArray.includes(current)) sel.value = current;
+        }
+
+        function initLoanListener() {
+            try {
+                onSnapshot(collection(db, 'loan_journeys'), (snapshot) => {
+                    allJourneys = [];
+                    const stages = new Set();
+                    snapshot.forEach(d => {
+                        const data = d.data() || {};
+                        const last_stage = (data.workflow && data.workflow.last_stage) ? data.workflow.last_stage : (data.last_stage || '');
+                        const loan_product = (data.workflow && data.workflow.loan_product) ? data.workflow.loan_product : (data.loan_product || data.loan_product_name || data.product || '');
+                        const whatsapp = (data.conversation && data.conversation.whatsapp_number) ? data.conversation.whatsapp_number : (data.whatsapp_number || data.whatsapp || '');
+                        const start = (data.conversation && data.conversation.journey_start_time) ? data.conversation.journey_start_time : (data.journey_start_time || data.timestamp || data.start_time || '');
+                        const duration_seconds = Number(data.duration_seconds || data.duration || 0);
+                        const timestamp = data.timestamp || start || data.created_at || '';
+                        allJourneys.push({ id: d.id, last_stage: last_stage, loan_product: loan_product, whatsapp: whatsapp, start: start, duration_seconds: duration_seconds, timestamp: timestamp, raw: data });
+                        if (last_stage) stages.add(last_stage);
+                    });
+                    allJourneys.sort((a, b) => (new Date(b.timestamp || b.start).getTime() || 0) - (new Date(a.timestamp || a.start).getTime() || 0));
+                    updateLoanAnalytics();
+                    renderLoanTable();
+                    updateLoanFilters(Array.from(stages));
+                });
+            } catch (err) {
+                console.error('Loan listener error', err);
+            }
+        }
+
+        function updateLoanAnalytics() {
+            const total = allJourneys.length;
+            const totalSec = allJourneys.reduce((s, j) => s + (Number(j.duration_seconds) || 0), 0);
+            const avgSec = total ? Math.round(totalSec / total) : 0;
+            const terminalCount = allJourneys.filter(j => isTerminalStage(j.last_stage)).length;
+            const conv = total ? Math.round((terminalCount / total) * 100) : 0;
+            const elTotal = document.getElementById('loan-total-engagements');
+            const elAvg = document.getElementById('loan-avg-duration');
+            const elConv = document.getElementById('loan-flow-conversion');
+            if (elTotal) elTotal.innerText = total.toLocaleString();
+            if (elAvg) elAvg.innerText = formatDurationReadable(avgSec);
+            if (elConv) elConv.innerText = conv + '%';
+            updateLoanCharts();
+        }
+
+        function updateLoanCharts() {
+            const total = allJourneys.length;
+            const stageBuckets = {
+                'Product menu viewed': 0,
+                'About Product viewed': 0,
+                'Requirements Checklist viewed': 0,
+                'Enquiry submitted': 0,
+                'Complaint submitted': 0,
+                'Apply Now / Agent requested': 0,
+                'Session exited without action': 0
+            };
+            const productCounts = {};
+            const sentimentCounts = { Positive: 0, Neutral: 0, Negative: 0 };
+
+            allJourneys.forEach(j => {
+                const s = (j.last_stage || '').toString().toLowerCase();
+                if (/apply|agent|requested|talk to agent|apply now|agent requested|agent_request/i.test(s)) {
+                    stageBuckets['Apply Now / Agent requested']++;
+                } else if (/enquir|enquiry|inquiry|ask/i.test(s)) {
+                    stageBuckets['Enquiry submitted']++;
+                } else if (/complaint/i.test(s)) {
+                    stageBuckets['Complaint submitted']++;
+                } else if (/requirem|requirements|checklist|documents/i.test(s)) {
+                    stageBuckets['Requirements Checklist viewed']++;
+                } else if (/about|intro|details|product/i.test(s)) {
+                    stageBuckets['About Product viewed']++;
+                } else if (/menu|choices|main|product menu|product_menu|menu_view/i.test(s) || s.trim() === '') {
+                    stageBuckets['Product menu viewed']++;
+                } else {
+                    stageBuckets['Session exited without action']++;
+                }
+
+                const cat = mapProductName(j.loan_product);
+                productCounts[cat] = (productCounts[cat] || 0) + 1;
+
+                const sentStr = normalizeSentimentStr(j.convo_sentiment || (j.raw && (j.raw.convo_sentiment || j.raw.sentiment)) || j.sentiment || '');
+                sentimentCounts[sentStr] = (sentimentCounts[sentStr] || 0) + 1;
+            });
+
+            // Shared rich tooltip callback for chatbot charts
+            const richTooltip = (unit) => ({
+                backgroundColor: 'rgba(10,15,30,0.92)',
+                titleColor: '#FFD100',
+                bodyColor: '#e4e4e7',
+                borderColor: 'rgba(255,209,0,0.35)',
+                borderWidth: 1,
+                padding: 14,
+                cornerRadius: 12,
+                displayColors: true,
+                boxWidth: 10,
+                boxHeight: 10,
+                callbacks: {
+                    label: (ctx) => {
+                        const val = ctx.raw || 0;
+                        const ds = ctx.dataset.data;
+                        const sum = ds.reduce((a, b) => a + b, 0);
+                        const pct = sum ? ((val / sum) * 100).toFixed(1) : '0.0';
+                        return ` ${val} ${unit || 'sessions'} (${pct}%)`;
+                    }
+                }
+            });
+
+            const hoverCursor = (canvas) => ({
+                onHover: (e, active) => { canvas.style.cursor = active && active.length ? 'pointer' : 'default'; }
+            });
+
+            // 1. Funnel
+            if (loanCharts.funnel) try { loanCharts.funnel.destroy(); } catch (e) { }
+            const funnelCtx = document.getElementById('loan-funnel-chart');
+            if (funnelCtx) {
+                const labels = Object.keys(stageBuckets);
+                const data = Object.values(stageBuckets);
+                const funnelColors = ['#3b82f6', '#60A5FA', '#F59E0B', '#06B6D4', '#EE5D50', '#10B981', '#A3A3A3'];
+                const funnelHover = funnelColors.map(c => c + 'cc');
+                loanCharts.funnel = new Chart(funnelCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: funnelColors,
+                            hoverBackgroundColor: funnelColors,
+                            borderRadius: 8,
+                            borderSkipped: false,
+                            hoverBorderWidth: 2,
+                            hoverBorderColor: '#FFD100'
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        maintainAspectRatio: false,
+                        animation: { duration: 1000, easing: 'easeOutQuart' },
+                        scales: {
+                            x: { beginAtZero: true, grid: { color: 'rgba(156,163,175,0.1)' }, ticks: { font: { size: 11 } } },
+                            y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#6b7280' } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: richTooltip('sessions')
+                        },
+                        ...hoverCursor(funnelCtx),
+                        onClick: (e, active) => { if (active && active.length) showLoanOverlay(labels[active[0].index]); }
+                    }
+                });
+            }
+
+            // 2. Product
+            if (loanCharts.productDonut) try { loanCharts.productDonut.destroy(); } catch (e) { }
+            const pdCtx = document.getElementById('loan-product-doughnut');
+            if (pdCtx) {
+                const labels = Object.keys(productCounts);
+                const data = Object.values(productCounts);
+                loanCharts.productDonut = new Chart(pdCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#a78bfa', '#E5E7EB'],
+                            hoverBackgroundColor: ['#2563eb', '#d97706', '#059669', '#7c3aed', '#D1D5DB'],
+                            hoverOffset: 14,
+                            borderWidth: 2,
+                            hoverBorderWidth: 3,
+                            borderColor: 'transparent',
+                            hoverBorderColor: '#FFD100'
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        animation: { animateRotate: true, animateScale: true, duration: 900, easing: 'easeOutBack' },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyleWidth: 10, font: { size: 11 } } },
+                            tooltip: richTooltip('sessions')
+                        },
+                        ...hoverCursor(pdCtx),
+                        onClick: (e, active) => { if (active && active.length) showLoanOverlay(labels[active[0].index], 'product'); }
+                    }
+                });
+            }
+
+            // 3. Sentiment
+            if (loanCharts.sentimentPie) try { loanCharts.sentimentPie.destroy(); } catch (e) { }
+            const spCtx = document.getElementById('loan-sentiment-pie');
+            if (spCtx) {
+                const labels = Object.keys(sentimentCounts);
+                const data = Object.values(sentimentCounts);
+                loanCharts.sentimentPie = new Chart(spCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#10B981', '#9CA3AF', '#EE5D50'],
+                            hoverBackgroundColor: ['#059669', '#6B7280', '#dc2626'],
+                            hoverOffset: 14,
+                            borderWidth: 2,
+                            hoverBorderWidth: 3,
+                            borderColor: 'transparent',
+                            hoverBorderColor: '#FFD100'
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        animation: { animateRotate: true, animateScale: true, duration: 900, easing: 'easeOutBack' },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyleWidth: 10, font: { size: 11 } } },
+                            tooltip: richTooltip('sessions')
+                        },
+                        ...hoverCursor(spCtx),
+                        onClick: (e, active) => { if (active && active.length) showLoanOverlay(labels[active[0].index], 'sentiment'); }
+                    }
+                });
+            }
+        }
+
+        function normalizeSentimentStr(s) {
+            s = (s || '').toString().toLowerCase();
+            if (!s || s.trim() === '') return 'Neutral';
+            if (/neutral|ntrl/.test(s)) return 'Neutral';
+            if (/pos|positive|good|happy|satisfied|great|excellent/.test(s)) return 'Positive';
+            if (/neg|negative|bad|angry|sad|unsatisfied|poor/.test(s)) return 'Negative';
+            return 'Neutral';
+        }
+
+        function formatSessionDate(ts) {
+            if (!ts) return 'Unknown';
+            const d = new Date(ts);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = String(d.getFullYear()).substring(2);
+            return `${day}/${month}/${year}`;
+        }
+
+        function renderLoanTable() {
+            const tbody = document.getElementById('loan-table-body');
+            if (!tbody) return;
+            const search = (document.getElementById('loan-search')?.value || '').trim().toLowerCase();
+            const productFilter = (document.getElementById('loan-product-filter')?.value || 'all');
+            const terminalFilter = (document.getElementById('loan-terminal-filter')?.value || 'all');
+            tbody.innerHTML = '';
+            const filtered = allJourneys.filter(j => {
+                const searchStr = ((j.whatsapp || '') + (j.name || '') + (j.convo_title || '')).toString().toLowerCase();
+                if (search && !searchStr.includes(search)) return false;
+                if (productFilter && productFilter !== 'all') {
+                    if (mapProductName(j.loan_product).toLowerCase() !== productFilter.toLowerCase()) return false;
+                }
+                if (terminalFilter && terminalFilter !== 'all') {
+                    if ((j.last_stage || '') !== terminalFilter) return false;
+                }
+                return true;
+            });
+            filtered.forEach((j, i) => {
+                const idx = i + 1;
+                const raw = j.raw || {};
+                const waNum = escapeHtml(j.whatsapp || 'Unknown');
+                const dateStr = formatSessionDate(j.timestamp);
+
+                const badgeText = escapeHtml(j.last_stage || 'N/A');
+                const badgeClasses = getStageBadgeClass(j.last_stage);
+                const surveysHtml = renderSurveyBadgesHtml(j);
+                const html = `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                        <td class="p-3 text-sm font-medium text-grey cursor-pointer" onclick="showJourneyDetails('${j.id}')">${idx}</td>
+                        <td class="p-3 text-sm font-bold">
+                            <a href="#" class="journey-link flex items-center gap-2 group" data-id="${j.id}" aria-label="Open profile for ${waNum}">
+                                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs flex-shrink-0"><i class="fab fa-whatsapp"></i></span>
+                                <span class="text-primary group-hover:underline font-mono tracking-wide">${waNum}</span>
+                            </a>
+                        </td>
+                        <td class="p-3 font-medium text-sm text-gray-500 dark:text-gray-400">${escapeHtml(mapProductName(j.loan_product))}</td>
+                        <td class="p-3 text-sm"><span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${badgeClasses}">${badgeText}</span></td>
+                        <td class="p-3 text-sm hidden sm:table-cell text-gray-400">${formatDurationReadable(j.duration_seconds)}</td>
+                        <td class="p-3 text-xs text-gray-400 hidden sm:table-cell">${formatReadableDate(j.timestamp)}</td>
+                        <td class="p-3 text-sm">${surveysHtml}</td>
+                        <td class="p-3 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="showJourneyDetails('${j.id}')" class="px-4 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-black transition-all text-xs font-bold">View Profile</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                tbody.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function downloadLoanLogsExcel() {
+            const rows = allJourneys.map(j => ({ WhatsApp_Number: j.whatsapp, Loan_Product: j.loan_product, Last_Stage: j.last_stage, Duration: formatDurationReadable(j.duration_seconds), Timestamp: formatReadableDate(j.timestamp) }));
+            if (!rows || rows.length === 0) { Swal.fire('Info', 'No data to export.', 'info'); return; }
+            downloadExcelHelper('Loan_Journeys.xlsx', rows);
+        }
+
+        function getStageBadgeClass(stage) {
+            const s = (stage || '').toString().toLowerCase();
+            if (/apply|agent|requested|talk to agent|apply now|agent requested|agent_request/i.test(s)) return 'bg-gradient-to-r from-green-50 to-green-100 text-green-800 ring-1 ring-green-200 dark:from-emerald-800 dark:to-emerald-900 dark:text-emerald-200';
+            if (/enquir|enquiry|inquiry|ask/i.test(s)) return 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 ring-1 ring-blue-200 dark:from-sky-800 dark:to-sky-900 dark:text-sky-200';
+            if (/complaint/i.test(s)) return 'bg-gradient-to-r from-red-50 to-red-100 text-red-800 ring-1 ring-red-200 dark:from-rose-800 dark:to-rose-900 dark:text-rose-200';
+            if (/requirem|requirements|checklist|documents/i.test(s)) return 'bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-800 ring-1 ring-yellow-200 dark:from-amber-800 dark:to-amber-900 dark:text-amber-200';
+            if (/about|intro|details|product/i.test(s)) return 'bg-gradient-to-r from-slate-50 to-slate-100 text-slate-800 ring-1 ring-slate-200 dark:from-zinc-800 dark:to-zinc-900 dark:text-zinc-200';
+            if (/menu|choices|main|product menu|product_menu|menu_view/i.test(s) || s.trim() === '') return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 ring-1 ring-gray-200 dark:from-zinc-700 dark:to-zinc-800 dark:text-gray-200';
+            return 'bg-gray-50 text-gray-700 ring-1 ring-gray-200 dark:bg-zinc-800 dark:text-gray-200';
+        }
+
+        function getSurveyCount(j) {
+            const raw = j.raw || {};
+            let count = 0;
+            if (raw.survey_loan_q1 || raw.survey_loan_q2 || raw.survey_loan_q3) count++;
+            if ((raw.conversation && (raw.conversation.survey_agent_q1 || raw.conversation.survey_agent_q2 || raw.conversation.survey_agent_q3)) || raw.survey_agent_q1 || raw.survey_agent_q2 || raw.survey_agent_q3) count++;
+            return count;
+        }
+
+        function renderSurveyBadgesHtml(j) {
+            const raw = j.raw || {};
+            const parts = [];
+            if (raw.survey_loan_q1 || raw.survey_loan_q2 || raw.survey_loan_q3) {
+                parts.push(`<button data-survey-type="loan" data-id="${j.id}" class="survey-badge cursor-pointer inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-800 hover:bg-indigo-100 transition-colors"><i class='fas fa-clipboard-list'></i><span>Loan</span></button>`);
+            }
+            if ((raw.conversation && (raw.conversation.survey_agent_q1 || raw.conversation.survey_agent_q2 || raw.conversation.survey_agent_q3)) || raw.survey_agent_q1 || raw.survey_agent_q2 || raw.survey_agent_q3) {
+                parts.push(`<button data-survey-type="agent" data-id="${j.id}" class="survey-badge cursor-pointer inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium bg-teal-50 text-teal-800 hover:bg-teal-100 transition-colors"><i class='fas fa-user-check'></i><span>Agent</span></button>`);
+            }
+            if (parts.length === 0) return '<span class="text-xs text-gray-400">—</span>';
+            return parts.join(' ');
+        }
+
+        function showSurveyModal(type, id) {
+            const j = allJourneys.find(x => x.id === id);
+            if (!j) return;
+            const raw = j.raw || {};
+            let html = '';
+            // determine quiz date from common fields
+            const quizDate = raw.survey_loan_completed_at || raw.survey_loan_timestamp || raw.survey_completed_at || raw.survey_timestamp || raw.timestamp || j.timestamp || '';
+            const dateStr = formatReadableDate(quizDate);
+            if (type === 'loan') {
+                html += `<div class="text-xs text-gray-500 mb-2">Quiz date: ${dateStr || 'Unknown'}</div>`;
+                html += `<h4 class="font-bold mb-2">Loan Survey</h4>`;
+                html += `<div class="space-y-3">`;
+                html += `<div><strong>Q1 - How easy was it to navigate the loan application menu?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q1 || 'Not answered')}</div></div>`;
+                html += `<div><strong>Q2 - Did you find the application requirements checklist clear and helpful?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q2 || 'Not answered')}</div></div>`;
+                html += `<div><strong>Q3 - Do you have any suggestions to make this process smoother?</strong><div class="mt-1">Answer: ${escapeHtml(raw.survey_loan_q3 || 'Not answered')}</div></div>`;
+                html += `</div>`;
+            } else if (type === 'agent') {
+                const s = raw.conversation || raw;
+                const agentQuizDate = (s && (s.survey_agent_completed_at || s.survey_agent_timestamp)) || raw.survey_agent_completed_at || raw.survey_agent_timestamp || raw.timestamp || j.timestamp || '';
+                const agentDateStr = formatReadableDate(agentQuizDate);
+                html += `<div class="text-xs text-gray-500 mb-2">Quiz date: ${agentDateStr || 'Unknown'}</div>`;
+                html += `<h4 class="font-bold mb-2">Agent Survey</h4>`;
+                html += `<div class="space-y-3">`;
+                html += `<div><strong>Q1 - Satisfaction:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q1 || 'Not answered')}</div></div>`;
+                html += `<div><strong>Q2 - Resolution:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q2 || 'Not answered')}</div></div>`;
+                html += `<div><strong>Q3 - Comments:</strong><div class="mt-1">Answer: ${escapeHtml(s.survey_agent_q3 || 'Not answered')}</div></div>`;
+                html += `</div>`;
+            }
+            const modal = document.getElementById('survey-modal');
+            const body = document.getElementById('survey-modal-body');
+            const title = document.getElementById('survey-modal-title');
+            title.innerText = `${(type === 'loan') ? 'Loan Survey' : 'Agent Survey'} — ${j.whatsapp || id}`;
+            body.innerHTML = html;
+            openModal('survey-modal');
+        }
+
+        // Delegate survey badge clicks and name links to avoid inline onclick issues
+        document.addEventListener('click', (e) => {
+            const sb = e.target.closest && e.target.closest('.survey-badge');
+            if (sb) {
+                const type = sb.dataset.surveyType;
+                const id = sb.dataset.id;
+                if (type && id) {
+                    showSurveyModal(type, id);
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+            }
+            const jl = e.target.closest && e.target.closest('.journey-link');
+            if (jl) {
+                const id = jl.dataset.id;
+                if (id) {
+                    showJourneyDetails(id);
+                    e.preventDefault();
+                }
+            }
+        });
+
+        function showLoanOverlay(filterValue, filterType) {
+            const container = document.getElementById('loan-list-container');
+            const title = document.getElementById('loan-overlay-title');
+            const countEl = document.getElementById('loan-overlay-count');
+            if (!container) return;
+            const type = filterType || 'stage';
+            const label = filterValue || 'All';
+            title.innerText = `Journeys — ${label}`;
+            const normalizeSentimentStr = (s) => {
+                s = (s || '').toString().toLowerCase();
+                if (!s || s.trim() === '') return 'neutral';
+                if (/neutral|ntrl/.test(s)) return 'neutral';
+                if (/pos|positive|good|happy|satisfied|excellent/.test(s)) return 'positive';
+                if (/neg|negative|bad|angry|sad|unsatisfied|poor/.test(s)) return 'negative';
+                return 'neutral';
+            };
+
+            const filtered = allJourneys.filter(j => {
+                if (!label || label === 'All') return true;
+                if (type === 'product') {
+                    return mapProductName(j.loan_product) === label;
+                }
+                if (type === 'sentiment') {
+                    const s = normalizeSentimentStr(j.convo_sentiment || (j.raw && (j.raw.convo_sentiment || j.raw.sentiment)) || j.sentiment || '');
+                    return s.toString().toLowerCase() === label.toString().toLowerCase();
+                }
+                // default: stage
+                if (label === 'Session exited without action') {
+                    const s = (j.last_stage || '').toString().toLowerCase();
+                    return !(/apply|agent|requested|enquir|enquiry|complaint|requirem|about|intro|menu|choices/i.test(s));
+                }
+                return (j.last_stage || '').toString().toLowerCase().includes(label.split(' ')[0].toString().toLowerCase());
+            });
+            countEl.innerText = `${filtered.length} Journeys`;
+            container.innerHTML = '';
+            if (filtered.length === 0) container.innerHTML = '<div class="p-6 text-center text-gray-500">No journeys for this selection yet.</div>';
+            filtered.forEach(j => {
+                const surveysHtml = renderSurveyBadgesHtml(j);
+                const html = `
+                    <div class="p-3 border-b border-gray-100 dark:border-night-border hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-sm font-medium"><a href="#" class="journey-link text-primary font-medium cursor-pointer" data-id="${j.id}">${escapeHtml(j.whatsapp)}</a></div>
+                                <div class="text-xs text-gray-500">${escapeHtml(mapProductName(j.loan_product))} • ${formatDurationReadable(j.duration_seconds)}</div>
+                                <div class="text-xs text-gray-400 mt-1">${formatReadableDate(j.timestamp)}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="mb-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getStageBadgeClass(j.last_stage)}">${escapeHtml(j.last_stage || 'N/A')}</span></div>
+                                <div class="text-sm">
+                                    <button onclick="showJourneyDetails('${j.id}')" class="text-xs text-primary font-medium">View details</button>
+                                    <button onclick="showChatLog('${j.id}')" class="text-xs text-gray-600 ml-3">View Chat Log</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+            openModal('loan-overlay');
+        }
+
+        function closeLoanOverlay() { closeModal('loan-overlay'); }
+
+        function showJourneyDetails(id) {
+            const j = allJourneys.find(x => x.id === id);
+            if (!j) return;
+            const content = document.getElementById('loan-journey-content');
+            const titleEl = document.getElementById('loan-journey-title');
+            if (!content || !titleEl) return;
+
+            const userWhatsapp = j.whatsapp;
+            const userJourneys = allJourneys.filter(x => x.whatsapp === userWhatsapp).sort((a, b) => b.timestamp - a.timestamp);
+            const latestJ = userJourneys[0];
+
+            // Calculate User Metrics
+            const totalSessions = userJourneys.length;
+            const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+            let assistantCalls = 0;
+
+            userJourneys.forEach(uj => {
+                const s = normalizeSentimentStr(uj.convo_sentiment || (uj.raw && (uj.raw.convo_sentiment || uj.raw.sentiment)) || uj.sentiment || '');
+                sentimentCounts[s.toLowerCase()]++;
+                if (isTerminalStage(uj.last_stage)) assistantCalls++;
+            });
+
+            const latestTitle = latestJ.convo_title || (latestJ.raw && latestJ.raw.convo_title) || 'General Enquiry Interaction';
+            const latestSummary = latestJ.convo_summary || (latestJ.raw && latestJ.raw.convo_summary) || 'No summary available for the latest session.';
+
+            titleEl.innerText = `User Profile`;
+            document.getElementById('user-profile-subtitle').innerText = userWhatsapp;
+
+            // Dominant sentiment
+            const dominantSentiment = Object.entries(sentimentCounts).sort((a, b) => b[1] - a[1])[0];
+            const sentimentLabel = dominantSentiment ? dominantSentiment[0] : 'neutral';
+            const sentimentColorMap = { positive: 'text-emerald-500', neutral: 'text-gray-400', negative: 'text-red-500' };
+            const sentimentIconMap = { positive: 'fa-smile', neutral: 'fa-meh', negative: 'fa-frown' };
+            const sentimentColor = sentimentColorMap[sentimentLabel] || 'text-gray-400';
+            const sentimentIcon = sentimentIconMap[sentimentLabel] || 'fa-meh';
+
+            // Last product seen across all sessions
+            const latestProduct = mapProductName(latestJ.loan_product) || 'General';
+            const latestStage = latestJ.last_stage || 'N/A';
+            const totalDuration = userJourneys.reduce((s, x) => s + (Number(x.duration_seconds) || 0), 0);
+
+            content.innerHTML = `
+                <div class="flex flex-col">
+
+                    <!-- Profile Header Strip -->
+                    <div class="flex items-center gap-4 px-6 py-5 border-b dark:border-night-border bg-gray-50/60 dark:bg-zinc-800/30">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-black text-base flex-shrink-0 shadow-md" style="background:linear-gradient(135deg,#FFD100,#FFB84D)">
+                            ${getInitials(userWhatsapp)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1"><i class="fab fa-whatsapp"></i> WhatsApp</span>
+                            </div>
+                            <p class="font-mono font-bold text-dark dark:text-white text-base mt-0.5 truncate">${escapeHtml(userWhatsapp)}</p>
+                        </div>
+                        <div class="flex items-center gap-1 ${sentimentColor} text-sm">
+                            <i class="fas ${sentimentIcon}"></i>
+                            <span class="text-xs font-bold capitalize">${sentimentLabel}</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI Row -->
+                    <div class="grid grid-cols-4 divide-x dark:divide-night-border border-b dark:border-night-border">
+                        <div class="px-4 py-4 text-center">
+                            <div class="text-[10px] uppercase font-bold text-grey tracking-wider mb-1">Sessions</div>
+                            <div class="text-2xl font-black text-dark dark:text-white">${totalSessions}</div>
+                        </div>
+                        <div class="px-4 py-4 text-center">
+                            <div class="text-[10px] uppercase font-bold text-grey tracking-wider mb-1">Total Time</div>
+                            <div class="text-2xl font-black text-dark dark:text-white">${formatDurationReadable(totalDuration)}</div>
+                        </div>
+                        <div class="px-4 py-4 text-center">
+                            <div class="text-[10px] uppercase font-bold text-grey tracking-wider mb-1">Agent Requests</div>
+                            <div class="text-2xl font-black text-primary">${assistantCalls}</div>
+                        </div>
+                        <div class="px-4 py-4 text-center">
+                            <div class="text-[10px] uppercase font-bold text-grey tracking-wider mb-1">Last Product</div>
+                            <div class="text-sm font-black text-dark dark:text-white leading-tight mt-1">${escapeHtml(latestProduct)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Latest Session Summary -->
+                    <div class="px-6 py-4 border-b dark:border-night-border">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-grey uppercase tracking-widest">Latest Session Summary</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStageBadgeClass(latestStage)}">${escapeHtml(latestStage)}</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-dark dark:text-white mb-1">${escapeHtml(latestTitle)}</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">${escapeHtml(latestSummary)}</p>
+                    </div>
+
+                    <!-- Session Selector -->
+                    <div class="px-6 pt-4 pb-2">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] font-bold text-grey uppercase tracking-widest flex items-center gap-1.5"><i class="fas fa-history"></i> Sessions (${totalSessions})</span>
+                            <div class="relative">
+                                <select id="profile-session-dropdown" onchange="updateProfileSessionView()"
+                                    class="appearance-none text-xs font-semibold bg-gray-100 dark:bg-zinc-800 dark:text-white pr-7 pl-3 py-1.5 rounded-lg border-none focus:ring-1 focus:ring-primary outline-none cursor-pointer">
+                                    ${userJourneys.map((uj, idx) => `<option value="${uj.id}">${idx === 0 ? '★ Latest — ' : ''}${formatSessionDate(uj.timestamp)} · ${escapeHtml(uj.convo_title || uj.last_stage || 'Enquiry')}</option>`).join('')}
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-grey">
+                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="profile-session-view" class="rounded-xl border dark:border-night-border bg-gray-50/50 dark:bg-zinc-800/20 overflow-hidden">
+                            <!-- session details injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Close Footer -->
+                    <div class="px-6 py-3 flex justify-end border-t dark:border-night-border mt-2">
+                        <button onclick="closeModal('loan-journey-modal')" class="px-4 py-2 rounded-lg text-xs font-bold bg-gray-100 dark:bg-night-hover text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">Close</button>
+                    </div>
+                </div>
+            `;
+
+            openModal('loan-journey-modal');
+
+            // Populate initial session view after DOM is ready
+            setTimeout(() => {
+                updateProfileSessionView();
+            }, 80);
+        }
+
+        window.updateProfileSessionView = () => {
+            const select = document.getElementById('profile-session-dropdown');
+            const container = document.getElementById('profile-session-view');
+            if (!select || !container) return;
+            const sid = select.value;
+            const j = allJourneys.find(x => x.id === sid);
+            if (!j) return;
+
+            const raw = j.raw || {};
+            const surveysHtml = renderSurveyBadgesHtml(j);
+            const sentiment = normalizeSentimentStr(j.convo_sentiment || raw.convo_sentiment || j.sentiment || raw.sentiment || '');
+            const sentColorMap = { Positive: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', Neutral: 'bg-gray-100 text-gray-600 dark:bg-zinc-700 dark:text-gray-300', Negative: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+            const sentBadge = sentColorMap[sentiment] || sentColorMap['Neutral'];
+            const product = escapeHtml(mapProductName(j.loan_product) || 'General');
+            const transcript = escapeHtml(raw.full_transcript || raw.fullTranscript || '').replace(/\n/g, '<br>');
+            const summary = escapeHtml(j.convo_summary || raw.convo_summary || '');
+
+            container.innerHTML = `
+                <div class="divide-y dark:divide-night-border">
+
+                    <!-- Session Meta Row -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x dark:divide-night-border">
+                        <div class="px-4 py-3">
+                            <div class="text-[9px] uppercase font-bold text-grey tracking-wider mb-1">Date &amp; Time</div>
+                            <div class="text-xs font-semibold dark:text-white">${formatReadableDate(j.timestamp)}</div>
+                        </div>
+                        <div class="px-4 py-3">
+                            <div class="text-[9px] uppercase font-bold text-grey tracking-wider mb-1">Duration</div>
+                            <div class="text-xs font-semibold dark:text-white">${formatDurationReadable(j.duration_seconds)}</div>
+                        </div>
+                        <div class="px-4 py-3">
+                            <div class="text-[9px] uppercase font-bold text-grey tracking-wider mb-1">Last Stage</div>
+                            <div class="mt-0.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getStageBadgeClass(j.last_stage)}">${escapeHtml(j.last_stage || 'N/A')}</span></div>
+                        </div>
+                        <div class="px-4 py-3">
+                            <div class="text-[9px] uppercase font-bold text-grey tracking-wider mb-1">Sentiment</div>
+                            <div class="mt-0.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold ${sentBadge}">${sentiment.toUpperCase()}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Product + Surveys Row -->
+                    <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] uppercase font-bold text-grey tracking-wider">Product:</span>
+                            <span class="text-xs font-bold dark:text-white">${product}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${surveysHtml || '<span class="text-xs text-gray-400">No surveys</span>'}
+                        </div>
+                    </div>
+
+                    ${summary ? `
+                    <!-- Session Summary -->
+                    <div class="px-4 py-3">
+                        <div class="text-[9px] uppercase font-bold text-grey tracking-wider mb-1.5">Session Summary</div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">${summary}</p>
+                    </div>` : ''}
+
+                    ${transcript ? `
+                    <!-- Transcript -->
+                    <div class="px-4 py-3">
+                        <div class="text-[9px] uppercase font-bold text-grey tracking-wider mb-2">Conversation Transcript</div>
+                        <div class="max-h-48 overflow-y-auto text-xs leading-relaxed text-gray-600 dark:text-gray-400 bg-white dark:bg-zinc-900/50 rounded-lg p-3 border dark:border-night-border">${transcript}</div>
+                    </div>` : ''}
+
+                    <!-- Actions -->
+                    <div class="px-4 py-3 flex justify-end gap-2">
+                        <button onclick="showChatLog('${j.id}')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 text-xs font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors flex items-center gap-1.5"><i class="fas fa-comment-dots"></i> View Chat Log</button>
+                    </div>
+                </div>
+            `;
+        }
+        // Ensure overlays are top-level so backdrop-blur isn't clipped by transformed ancestors
+        (function moveModalsToBody() {
+            try {
+                const ids = ['loan-overlay', 'loan-journey-modal', 'survey-modal', 'chatlog-modal'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.parentElement !== document.body) {
+                        document.body.appendChild(el);
+                    }
+                });
+            } catch (e) { console.warn('modal move error', e); }
+        })();
+        // Toggle charts <-> live sessions view with slide-up arrival animation
+        function animateInFromBottom(el) {
+            return new Promise(resolve => {
+                if (!el) return resolve();
+                el.classList.remove('hidden');
+                el.style.willChange = 'transform, opacity';
+                el.style.transform = 'translateY(24px)';
+                el.style.opacity = '0';
+                el.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), opacity 420ms ease-out';
+                requestAnimationFrame(() => {
+                    el.style.transform = 'translateY(0)';
+                    el.style.opacity = '1';
+                });
+                setTimeout(() => {
+                    el.style.transition = '';
+                    el.style.transform = '';
+                    el.style.opacity = '';
+                    el.style.willChange = '';
+                    resolve();
+                }, 560);
+            });
+        }
+
+        function animateOutToBottom(el) {
+            return new Promise(resolve => {
+                if (!el || el.classList.contains('hidden')) return resolve();
+                el.style.willChange = 'transform, opacity';
+                el.style.transform = 'translateY(0)';
+                el.style.opacity = '1';
+                el.style.transition = 'transform 420ms cubic-bezier(.2,.8,.2,1), opacity 360ms ease-in';
+                requestAnimationFrame(() => {
+                    el.style.transform = 'translateY(24px)';
+                    el.style.opacity = '0';
+                });
+                setTimeout(() => {
+                    el.classList.add('hidden');
+                    el.style.transition = '';
+                    el.style.transform = '';
+                    el.style.opacity = '';
+                    el.style.willChange = '';
+                    resolve();
+                }, 460);
+            });
+        }
+
+        window.toggleAnalyticsView = async () => {
+            const charts = document.getElementById('loan-analytics-charts');
+            const live = document.getElementById('loan-analytics-live');
+            const btn = document.getElementById('analytics-mode-toggle');
+            if (!charts || !live || !btn) return;
+            const showingCharts = !charts.classList.contains('hidden');
+            if (showingCharts) {
+                // charts -> out, live -> in
+                animateOutToBottom(charts);
+                await animateInFromBottom(live);
+                btn.setAttribute('aria-pressed', 'true');
+                btn.innerText = 'Show Charts';
+                btn.classList.add('ring-4', 'ring-yellow-300', 'dark:ring-yellow-200');
+            } else {
+                // live -> out, charts -> in
+                animateOutToBottom(live);
+                await animateInFromBottom(charts);
+                btn.setAttribute('aria-pressed', 'false');
+                btn.innerText = 'Show Live Sessions';
+                btn.classList.remove('ring-4', 'ring-yellow-300', 'dark:ring-yellow-200');
+            }
+            // Resize charts after toggle so they render correctly
+            setTimeout(() => {
+                try { if (loanCharts.funnel) loanCharts.funnel.resize(); } catch (e) { }
+                try { if (loanCharts.productDonut) loanCharts.productDonut.resize(); } catch (e) { }
+                try { if (loanCharts.sentimentPie) loanCharts.sentimentPie.resize(); } catch (e) { }
+            }, 600);
+        };
         // Utilities
         window.getInitials = (name) => {
             if (!name) return '?';
             const parts = name.split(' ');
             return parts.length === 1 ? parts[0].substring(0, 2).toUpperCase() : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        };
+
+        // Chat log modal helper (Chatbot User Analytics only)
+        window.showChatLog = (id) => {
+            const j = allJourneys.find(x => x.id === id);
+            if (!j) return;
+            const raw = j.raw || {};
+            const title = escapeHtml(raw.convo_title || j.convo_title || 'Conversation');
+            const summary = escapeHtml(raw.convo_summary || j.convo_summary || '');
+            const dateStr = formatReadableDate(raw.timestamp || j.timestamp || j.start || '');
+            const transcript = raw.full_transcript || raw.fullTranscript || raw.full_transcript_text || '';
+
+            const modal = document.getElementById('chatlog-modal');
+            const body = document.getElementById('chatlog-modal-body');
+            const heading = document.getElementById('chatlog-modal-title');
+            if (!modal || !body || !heading) return;
+            heading.innerText = `${title}${dateStr ? ' — ' + dateStr : ''}`;
+            body.innerHTML = '';
+            if (summary) body.innerHTML += `<div class="text-xs text-gray-500 mb-2">${summary}</div>`;
+            body.innerHTML += `<pre class="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-800 p-3 rounded max-h-[60vh] overflow-y-auto">${escapeHtml(transcript || 'No transcript available')}</pre>`;
+            openModal('chatlog-modal');
         };
 
         window.deleteUser = async (id) => {
@@ -2172,6 +3608,17 @@
         window.downloadKYCList = downloadKYCList;
         window.closeKYCOverlay = closeKYCOverlay;
         window.downloadUserDocs = downloadUserDocs;
+        window.downloadAllCustomersDocs = downloadAllCustomersDocs;
         window.exportAnalyticsPDF = exportAnalyticsPDF;
         window.updateDashboardTrends = updateDashboardTrends;
+        window.initLoanListener = initLoanListener;
+        window.downloadLoanLogsExcel = downloadLoanLogsExcel;
+        window.renderLoanTable = renderLoanTable;
+        window.updateLoanAnalytics = updateLoanAnalytics;
+        window.updateLoanCharts = updateLoanCharts;
+        window.showLoanOverlay = showLoanOverlay;
+        window.closeLoanOverlay = closeLoanOverlay;
+        window.showJourneyDetails = showJourneyDetails;
+        window.getStageBadgeClass = getStageBadgeClass;
+
     

@@ -2449,7 +2449,7 @@
             const stats = updateStats();
             const data = [
                 { Status: 'Pending', Count: stats.pending },
-                { Status: 'In Progress', Count: stats.total - stats.pending - stats.completed },
+                { Status: 'Incomplete', Count: stats.incomplete },
                 { Status: 'Completed', Count: stats.completed }
             ];
             downloadExcelHelper('Onboarding_Status_Distribution.xlsx', data);
@@ -3818,10 +3818,10 @@
 
         function updateStats() {
             const total = allCustomers.length;
-            const pending = total - allCustomers.filter(c => c.kycStatus === 'complete').length;
             const completed = allCustomers.filter(c => c.kycStatus === 'complete').length;
-            const pipIssues = allCustomers.filter(c => c.display_pip_status && c.display_pip_status !== 'Not Set' && c.display_pip_status !== 'None').length;
             const incomplete = allCustomers.filter(c => c.kycStatus === 'incomplete' || (c.lastStep && c.kycStatus !== 'complete')).length;
+            const pending = total - completed - incomplete;
+            const pipIssues = allCustomers.filter(c => c.display_pip_status && c.display_pip_status !== 'Not Set' && c.display_pip_status !== 'None').length;
             document.getElementById("stat-total").innerText = total.toLocaleString();
             document.getElementById("stat-pending").innerText = pending.toLocaleString();
             document.getElementById("stat-completed").innerText = completed.toLocaleString();
@@ -3866,9 +3866,9 @@
             charts.statusPie = new Chart(document.getElementById('chart-status-pie'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pending', 'In Progress', 'Completed'],
+                    labels: ['Pending', 'Incomplete', 'Completed'],
                     datasets: [{
-                        data: [stats.pending, stats.total - stats.pending - stats.completed, stats.completed],
+                        data: [stats.pending, stats.incomplete, stats.completed],
                         backgroundColor: ['#E2E8F0', '#F6AD55', '#05CD99'], borderWidth: 0
                     }]
                 },
